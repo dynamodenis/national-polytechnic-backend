@@ -1,0 +1,45 @@
+
+spring:
+  jpa:
+    database: mysql
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+
+  application:
+    name: HOP-BUSINESS-ONBOARDING-API
+
+  datasource:
+    username: wgicheru
+    url: jdbc:mysql://10.20.2.51:3306/hop_db
+    password: 1QAZ2wsx3edc.
+
+  data:
+    mongodb:
+      host: 10.20.2.114
+      port: 27017
+      authentication-database: chamadb
+      username: wgicheru
+      password: 1QAZ2wsx3edc.
+      database: hop_db
+
+  servlet:
+    multipart:
+      enabled: 'true'
+      max-request-size: 256MB
+      max-file-size: 256MB
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8671/eureka/
+  instance :
+    hostname : localhost
+
+hop_configs.user-auth.url : http://localhost:9398/user-management/api/v1/user
+hop_configs.user-auth.sign-up : /signup
+hop_configs.user-auth.edit-user-details : /update-user
+server:
+  port: 8080

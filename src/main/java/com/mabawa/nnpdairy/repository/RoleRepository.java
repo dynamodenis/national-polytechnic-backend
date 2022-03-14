@@ -1,0 +1,28 @@
+package com.mabawa.nnpdairy.repository;
+
+import com.mabawa.nnpdairy.models.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface RoleRepository extends JpaRepository<Role, UUID> {
+    @Query(value = "SELECT * FROM rolez WHERE admin != 99 order by name", nativeQuery = true)
+    List<Role> getAllRoles();
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Role rolez WHERE rolez.id = :id")
+    void deleteRolesById(@Param("id") UUID id);
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Role rolez")
+    void deleteAllRoles();
+}
