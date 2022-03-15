@@ -26,7 +26,7 @@ public class TCategoryz {
     List<TCategoryResources> tCategoryResourcesList;
 
     @Transient
-    List<String> imageDownloads;
+    private String imageDownloads;
 
     public UUID getId() {
         return id;
@@ -77,10 +77,10 @@ public class TCategoryz {
         this.tCategoryResourcesList = tCategoryResourcesList;
     }
 
-    public List<String> getImageDownloads() {
+    public String getImageDownloads() {
         return imageDownloads;
     }
-    public void setImageDownloads(List<String> imageDownloads) {
+    public void setImageDownloads(String imageDownloads) {
         this.imageDownloads = imageDownloads;
     }
 }

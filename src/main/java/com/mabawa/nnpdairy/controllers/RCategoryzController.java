@@ -39,7 +39,7 @@ public class RCategoryzController {
             rCategoryz = rCategoryzService.create(rCategoryz);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("r-category", rCategoryz);
+            catzMap.put("rcategory", rCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -57,7 +57,7 @@ public class RCategoryzController {
             rCategoryz = rCategoryzService.update(rCategoryz);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("r-category", rCategoryz);
+            catzMap.put("rcategory", rCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -85,7 +85,7 @@ public class RCategoryzController {
         List<RCategoryz> categoryList = rCategoryzService.getAllTList();
 
         HashMap catzMap = new HashMap();
-        catzMap.put("r-category", categoryList);
+        catzMap.put("rcategory", categoryList);
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
     }
 
@@ -98,7 +98,7 @@ public class RCategoryzController {
         } else {
 
             HashMap catzMap = new HashMap();
-            catzMap.put("r-category", categoryOptional.get());
+            catzMap.put("rcategory", categoryOptional.get());
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }
@@ -114,7 +114,7 @@ public class RCategoryzController {
             List<RCategoryz> categoryList = rCategoryzService.filterRCategoryz(name, paging);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("r-category", categoryList);
+            catzMap.put("rcategory", categoryList);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }

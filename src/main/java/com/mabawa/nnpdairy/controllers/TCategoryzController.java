@@ -65,7 +65,7 @@ public class TCategoryzController {
             }
 
             HashMap catzMap = new HashMap();
-            catzMap.put("t-category", tCategoryz);
+            catzMap.put("tcategory", tCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -108,7 +108,7 @@ public class TCategoryzController {
             tCategoryz.settCategoryResourcesList(tCategoryResourcesList);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("t-category", tCategoryz);
+            catzMap.put("tcategory", tCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -146,7 +146,7 @@ public class TCategoryzController {
             savedTCategoryz.settCategoryResourcesList(tCategoryResourcesList);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("t-category", savedTCategoryz);
+            catzMap.put("tcategory", savedTCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -174,7 +174,7 @@ public class TCategoryzController {
         List<TCategoryz> categoryList = tCategoryzService.getAllTList();
 
         HashMap catzMap = new HashMap();
-        catzMap.put("t-category", categoryList);
+        catzMap.put("tcategory", categoryList);
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
     }
 
@@ -183,7 +183,7 @@ public class TCategoryzController {
         List<TCategoryz> categoryList = tCategoryzService.getAllTImagesList();
 
         HashMap catzMap = new HashMap();
-        catzMap.put("t-category", categoryList);
+        catzMap.put("tcategory", categoryList);
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
     }
 
@@ -199,7 +199,7 @@ public class TCategoryzController {
             tCategoryz.settCategoryResourcesList(tCategoryResourcesList);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("t-category", tCategoryz);
+            catzMap.put("tcategory", tCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }
@@ -215,7 +215,7 @@ public class TCategoryzController {
             List<TCategoryz> categoryList = tCategoryzService.filterTCategoryz(name, paging);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("t-category", categoryList);
+            catzMap.put("tcategory", categoryList);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }

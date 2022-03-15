@@ -36,15 +36,15 @@ public class ConsultantsProfileService {
         return consultantsProfileList;
     }
 
-    public List<String> getConsultantProfImage(String conId){
+    public String getConsultantProfImage(String conId){
         List<ConsultantsProfile> consultantsProfileList = consultantsProfileRepository.getConsultantsProfileByConsultantId(conId);
-        List<String> imageDonwloads = new ArrayList<>();
+        String[] imageDonwloads = {""};
         consultantsProfileList.forEach(consultantsProfile -> {
             if (consultantsProfile.getImage() != null) {
-                imageDonwloads.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData())));
+                imageDonwloads[0] = Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData()));
             }
         });
-        return imageDonwloads;
+        return imageDonwloads[0];
     }
 
     public String addProfile(ConsultantsProfile consultantsProfile){

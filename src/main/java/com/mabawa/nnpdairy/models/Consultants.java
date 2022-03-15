@@ -29,7 +29,7 @@ public class Consultants {
     List<ConsultantsProfile> consultantsProfileList;
 
     @Transient
-    private List<String> imageDownloads;
+    private String imageDownloads;
 
     public UUID getId() {
         return id;
@@ -101,10 +101,10 @@ public class Consultants {
         this.consultantsProfileList = consultantsProfileList;
     }
 
-    public List<String> getImageDownloads() {
+    public String getImageDownloads() {
         return imageDownloads;
     }
-    public void setImageDownloads(List<String> imageDownloads) {
+    public void setImageDownloads(String imageDownloads) {
         this.imageDownloads = imageDownloads;
     }
 }

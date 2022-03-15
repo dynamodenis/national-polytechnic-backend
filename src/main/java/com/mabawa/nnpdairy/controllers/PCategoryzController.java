@@ -42,7 +42,7 @@ public class PCategoryzController {
             pCategoryz = pCategoryzService.create(pCategoryz);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("p-category", pCategoryz);
+            catzMap.put("pcategory", pCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -60,7 +60,7 @@ public class PCategoryzController {
             pCategoryz = pCategoryzService.update(pCategoryz);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("p-category", pCategoryz);
+            catzMap.put("pcategory", pCategoryz);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
         }
     }
@@ -88,7 +88,7 @@ public class PCategoryzController {
         List<PCategoryz> categoryList = pCategoryzService.getAllTList();
 
         HashMap catzMap = new HashMap();
-        catzMap.put("p-category", categoryList);
+        catzMap.put("pcategory", categoryList);
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
     }
 
@@ -97,7 +97,7 @@ public class PCategoryzController {
         List<MarketplaceTypes> categoryList = marketplaceService.getAllTypes();
 
         HashMap catzMap = new HashMap();
-        catzMap.put("m-types", categoryList);
+        catzMap.put("mtypes", categoryList);
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
     }
 
@@ -110,7 +110,7 @@ public class PCategoryzController {
         } else {
 
             HashMap catzMap = new HashMap();
-            catzMap.put("m-category", categoryOptional.get());
+            catzMap.put("mcategory", categoryOptional.get());
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }
@@ -126,7 +126,7 @@ public class PCategoryzController {
             List<PCategoryz> categoryList = pCategoryzService.filterTCategoryz(name, paging);
 
             HashMap catzMap = new HashMap();
-            catzMap.put("p-category", categoryList);
+            catzMap.put("pcategory", categoryList);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }

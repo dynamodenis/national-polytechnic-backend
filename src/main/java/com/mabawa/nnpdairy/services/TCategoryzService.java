@@ -40,7 +40,7 @@ public class TCategoryzService {
         List<TCategoryz> tCategoryzList = tCategoryzRepository.getAllCategory();
 
         tCategoryzList.forEach(tCategoryz -> {
-            List<String> imagesList = tCategoryzResService.getTcategoryImages(tCategoryz.getId().toString());
+            String imagesList = tCategoryzResService.getTcategoryImages(tCategoryz.getId().toString());
             tCategoryz.setImageDownloads(imagesList);
         });
         return tCategoryzList;

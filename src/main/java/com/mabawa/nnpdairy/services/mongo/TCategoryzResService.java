@@ -31,15 +31,15 @@ public class TCategoryzResService {
         return tCategoryResourcesList;
     }
 
-    public List<String> getTcategoryImages(String tcategoryResId){
-        List<String> imagesList = new ArrayList<>();
+    public String getTcategoryImages(String tcategoryResId){
+        String[] imagesList = {""};
         List<TCategoryResources> tCategoryResourcesList = tCategoryzResRepository.getTCategoryResourcesByTcategoryzId(tcategoryResId);
         tCategoryResourcesList.forEach(tCategoryResources -> {
             if (tCategoryResources.getImage() != null){
-                imagesList.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tCategoryResources.getImage().getData())));
+                imagesList[0] = Base64.getEncoder().encodeToString(imageService.decompressBytes(tCategoryResources.getImage().getData()));
             }
         });
-        return imagesList;
+        return imagesList[0];
     }
 
     public String addTcategoryResources(TCategoryResources tCategoryResources){
