@@ -24,6 +24,8 @@ public class Consultants {
     private String projects;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Africa/Nairobi")
     private Timestamp created;
+    private Boolean isavailsat;
+    private Boolean isavailsun;
 
     @Transient
     List<ConsultantsProfile> consultantsProfileList;
@@ -106,5 +108,19 @@ public class Consultants {
     }
     public void setImageDownloads(String imageDownloads) {
         this.imageDownloads = imageDownloads;
+    }
+
+    public Boolean getIsavailsat() {
+        return isavailsat;
+    }
+    public void setIsavailsat(Boolean isavailsat) {
+        this.isavailsat = isavailsat;
+    }
+
+    public Boolean getIsavailsun() {
+        return isavailsun;
+    }
+    public void setIsavailsun(Boolean isavailsun) {
+        this.isavailsun = isavailsun;
     }
 }

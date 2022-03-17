@@ -1,9 +1,11 @@
 package com.mabawa.nnpdairy.controllers;
 
 import com.mabawa.nnpdairy.constants.Constants;
+import com.mabawa.nnpdairy.models.Appointments;
 import com.mabawa.nnpdairy.models.Consultants;
 import com.mabawa.nnpdairy.models.Response;
 import com.mabawa.nnpdairy.models.mongo.ConsultantsProfile;
+import com.mabawa.nnpdairy.services.AppointmentService;
 import com.mabawa.nnpdairy.services.ConsultantService;
 import com.mabawa.nnpdairy.services.ImageService;
 import com.mabawa.nnpdairy.services.mongo.ConsultantsProfileService;
@@ -32,6 +34,9 @@ public class ConsultantController {
 
     @Autowired
     private ImageService imageService;
+
+    @Autowired
+    private AppointmentService appointmentService;
 
     String title = Constants.TITLES[0];
 
@@ -215,6 +220,118 @@ public class ConsultantController {
             consultantService.deleteById(id);
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
         }
+    }
+
+    @PostMapping(path = "new-appointment")
+    public ResponseEntity<Response> addNewAppointment(@RequestBody Appointments appointments){
+        if (appointments.getAppuser().toString().isEmpty() || appointments.getConsultant().toString().isEmpty()){
+            String msg = "Missing Params.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        Optional<Appointments> optionalAppointments = appointmentService.getUserAppointment(appointments.getAppuser(), appointments.getConsultant(), 1);
+        if (optionalAppointments.isPresent()){
+            String msg = "Provided User already has an OPEN appointment with selected Consultant .";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        LocalDateTime lastLocal = LocalDateTime.now();
+        appointments.setCreated(Timestamp.valueOf(lastLocal));
+
+        appointments = appointmentService.create(appointments);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointment", appointments);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
+    }
+
+    @PutMapping(path = "edit-appointment/{id}")
+    public ResponseEntity<Response> editAppointment(@PathVariable UUID id, @RequestBody Appointments appointments){
+        if (appointments.getAppuser().toString().isEmpty() || appointments.getConsultant().toString().isEmpty()){
+            String msg = "Missing Params.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        Optional<Appointments> optionalAppointments = appointmentService.findById(id);
+        if (!optionalAppointments.isPresent()){
+            String msg = "Appointment not found by ID provided.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        Appointments savedAppointment = optionalAppointments.get();
+        appointments.setCreated(savedAppointment.getCreated());
+        appointments.setId(savedAppointment.getId());
+
+        appointments = appointmentService.update(appointments);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointment", appointments);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
+    }
+
+    @GetMapping(path = "getAllAppointments")
+    public ResponseEntity<Response> getAllAppointments() {
+        List<Appointments> appointmentsList = appointmentService.findAllAppointments();
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointments", appointmentsList);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
+    }
+
+    @GetMapping(path = "getAllConsultantAppointments/{consultantId}")
+    public ResponseEntity<Response> getAllConsultantAppointments(@PathVariable UUID consultantId) {
+        List<Appointments> appointmentsList = appointmentService.getConsultantAppointments(consultantId);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointments", appointmentsList);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
+    }
+
+    @GetMapping(path = "filterConsultantAppointments/{consultantId}/{status}")
+    public ResponseEntity<Response> filterConsultantAppointments(@PathVariable UUID consultantId, @PathVariable Integer status) {
+        List<Appointments> appointmentsList = appointmentService.filterConsultantAppointments(consultantId, status);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointments", appointmentsList);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
+    }
+
+    @GetMapping(path = "getAllUserAppointments/{userId}")
+    public ResponseEntity<Response> getAllUserAppointments(@PathVariable UUID userId) {
+        List<Appointments> appointmentsList = appointmentService.getUserAppointments(userId);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointments", appointmentsList);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
+    }
+
+    @GetMapping(path = "filterUserAppointments/{userId}/{status}")
+    public ResponseEntity<Response> filterUserAppointments(@PathVariable UUID userId, @PathVariable Integer status) {
+        List<Appointments> appointmentsList = appointmentService.filterUserAppointments(userId, status);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("appointments", appointmentsList);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
+    }
+
+    @DeleteMapping(path = {"/delete-appointment/{id}"})
+    public ResponseEntity<Response> deleteAppointmentById(@PathVariable UUID id) {
+        Optional<Appointments> optionalAppointments = appointmentService.findById(id);
+        if (!optionalAppointments.isPresent()) {
+            String msg = "Appointment doesn't exists By ID Provided.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        } else {
+            appointmentService.deleteById(id);
+            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+        }
+    }
+
+    @DeleteMapping(path = {"/delete-appointment-consultant/{consultant}"})
+    public ResponseEntity<Response> deleteAppointmentByConsultant(@PathVariable UUID consultant) {
+        appointmentService.deleteAppointmentByConsultant(consultant);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
+    @DeleteMapping(path = {"/delete-appointment-user/{appuser}"})
+    public ResponseEntity<Response> deleteAppointmentByUser(@PathVariable UUID appuser) {
+        appointmentService.deleteAppointmentByUser(appuser);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {
