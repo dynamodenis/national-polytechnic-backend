@@ -13,8 +13,8 @@ import java.util.Optional;
 
 //@Repository
 public interface ConsultantsProfileRepository extends MongoRepository<ConsultantsProfile, String> {
-    @Query("{ 'consultantId' : ?0 }")
-    List<ConsultantsProfile> getConsultantsProfileByConsultantId(String consultantId);
+    @Query("{ 'id' : ?0 }")
+    List<ConsultantsProfile> getConsultantsProfileById(String id);
 
-    public void deleteConsultantsProfileByConsultantId(String consultantId);
+    public void deleteConsultantsProfileById(String id);
 }

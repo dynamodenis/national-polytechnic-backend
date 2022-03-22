@@ -3,6 +3,7 @@ package com.mabawa.nnpdairy.services;
 import com.google.gson.Gson;
 import com.mabawa.nnpdairy.models.Products;
 import com.mabawa.nnpdairy.models.Response;
+import com.mabawa.nnpdairy.models.mongo.PImages;
 import com.mabawa.nnpdairy.repository.ProductsRepository;
 import com.mabawa.nnpdairy.services.mongo.PImagesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class ProductsService {
         List<Products> productsList = productsRepository.findAll();
         productsList.forEach(products -> {
             String prodId = products.getId().toString();
-            products.setpImages(pImagesService.getProductImage(prodId));
+            products.setpImage(pImagesService.getProductImage(prodId));
         });
         return productsList;
     }
@@ -39,7 +40,7 @@ public class ProductsService {
     public List<Products> getAllProductswithImages(){
         List<Products> productsList = productsRepository.findAll();
         productsList.forEach(products -> {
-            products.setImageList(pImagesService.getProductImageList(products.getId().toString()));
+            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
         });
         return productsList;
     }
@@ -47,7 +48,7 @@ public class ProductsService {
     public List<Products> filterProductsByType(Integer type, Pageable pageable){
         List<Products> productsList = productsRepository.filterStockByType(type, pageable);
         productsList.forEach(products -> {
-            products.setImageList(pImagesService.getProductImageList(products.getId().toString()));
+            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
         });
         return productsList;
     }
@@ -55,7 +56,7 @@ public class ProductsService {
     public List<Products> filterProductsByTypeAndCategory(Integer type, UUID category, Pageable pageable){
         List<Products> productsList = productsRepository.filterStockByTypeAndCategory(type, category, pageable);
         productsList.forEach(products -> {
-            products.setImageList(pImagesService.getProductImageList(products.getId().toString()));
+            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
         });
         return productsList;
     }

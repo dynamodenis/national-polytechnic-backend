@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PImagesService {
@@ -18,30 +19,40 @@ public class PImagesService {
     @Autowired
     private ImageService imageService;
 
-    public List<PImages> getProductImage(String pID){
-        List<PImages> pImagesList = pImagesRepository.getProductImageByProductId(pID);
-        pImagesList.forEach(pImages -> {
-            pImages.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData())));
-        });
+    public String getProductImage(String pID){
+        String imgStr = "";
+        Optional<PImages> pImagesList = pImagesRepository.getProductImageById(pID);
+        if (pImagesList.isPresent())
+        {
+            imgStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(pImagesList.get().getImage().getData()));
+        }
 
-        return pImagesList;
+        return imgStr;
     }
 
-    public List<String> getProductImageList(String pID){
-        List<String> imageList = new ArrayList<>();
-        List<PImages> pImagesList = pImagesRepository.getProductImageByProductId(pID);
-        pImagesList.forEach(pImages -> {
-            imageList.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData())));
-        });
+    public List<PImages> getProductImageList(String pID){
+        List<PImages> imageList = new ArrayList<>();
+        Optional<PImages> pImagesList = pImagesRepository.getProductImageById(pID);
+        if (pImagesList.isPresent())
+        {
+            imageList.add(pImagesList.get());
+        }
 
         return imageList;
     }
 
+    public Optional<PImages> getProductResource(String id)
+    {
+        Optional<PImages> optionalPImages = pImagesRepository.findById(id);
+
+        return optionalPImages;
+    }
+
     public String addPImage(PImages pImages){
-        return pImagesRepository.insert(pImages).getId();
+        return pImagesRepository.save(pImages).getId();
     }
 
     public void deleteProductImage(String pId){
-        pImagesRepository.deleteByProductId(pId);
+        pImagesRepository.deleteById(pId);
     }
 }

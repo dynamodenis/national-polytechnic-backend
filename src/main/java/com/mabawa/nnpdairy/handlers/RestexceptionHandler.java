@@ -1,5 +1,7 @@
 package com.mabawa.nnpdairy.handlers;
 
+import com.mabawa.nnpdairy.models.AdviceResponse;
+import com.mabawa.nnpdairy.models.Response;
 import org.jboss.logging.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -21,10 +23,9 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.persistence.EntityNotFoundException;
-//import javax.validation.ConstraintViolationException;
+import javax.validation.ConstraintViolationException;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.*;
 
 
 //@ControllerAdvice
@@ -47,7 +48,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //                HttpStatus status, WebRequest request) {
 //            String error = ex.getParameterName() + " parameter is missing";
 //            log.error(error);
-//            return buildResponseEntity(new ApiError(BAD_REQUEST, error, ex));
+//            return buildResponseEntity(new AdviceResponse(BAD_REQUEST));
 //        }
 //
 //
@@ -71,31 +72,31 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //            builder.append(" media type is not supported. Supported media types are ");
 //            ex.getSupportedMediaTypes().forEach(t -> builder.append(t).append(", "));
 //            log.error(" media type is not supported");
-//            return buildResponseEntity(new ApiError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, builder.substring(0, builder.length() - 2), ex));
+//            return buildResponseEntity(new AdviceResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, builder.substring(0, builder.length() - 2), ex));
 //        }
 //
-//        /**
-//         * Handle MethodArgumentNotValidException. Triggered when an object fails @Valid validation.
-//         *
-//         * @param ex      the MethodArgumentNotValidException that is thrown when @Valid validation fails
-//         * @param headers HttpHeaders
-//         * @param status  HttpStatus
-//         * @param request WebRequest
-//         * @return the ApiError object
-//         */
-//        @Override
-//        protected ResponseEntity<Object> handleMethodArgumentNotValid(
-//                MethodArgumentNotValidException ex,
-//                HttpHeaders headers,
-//                HttpStatus status,
-//                WebRequest request) {
-//            ApiError apiError = new ApiError(BAD_REQUEST);
-//            apiError.setMessage("Validation error");
-//            apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
-//            apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
-//            log.error("Validation error");
-//            return buildResponseEntity(apiError);
-//        }
+////        /**
+////         * Handle MethodArgumentNotValidException. Triggered when an object fails @Valid validation.
+////         *
+////         * @param ex      the MethodArgumentNotValidException that is thrown when @Valid validation fails
+////         * @param headers HttpHeaders
+////         * @param status  HttpStatus
+////         * @param request WebRequest
+////         * @return the ApiError object
+////         */
+////        @Override
+////        protected ResponseEntity<Object> handleMethodArgumentNotValid(
+////                MethodArgumentNotValidException ex,
+////                HttpHeaders headers,
+////                HttpStatus status,
+////                WebRequest request) {
+////            AdviceResponse apiError = new AdviceResponse(BAD_REQUEST);
+////            apiError.setMessage("Validation error");
+////            apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
+////            apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
+////            log.error("Validation error");
+////            return buildResponseEntity(apiError);
+////        }
 //
 //    /**
 //     * Handles javax.validation.ConstraintViolationException. Thrown when @Validated fails.
@@ -103,15 +104,15 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //     * @param ex the ConstraintViolationException
 //     * @return the ApiError object
 //     */
-//    @ExceptionHandler(ConstraintViolationException.class)
-//        protected ResponseEntity<Object> handleConstraintViolation(
-//                ConstraintViolationException ex) {
-//            ApiError apiError = new ApiError(BAD_REQUEST);
-//            apiError.setMessage("Validation error");
-//            apiError.addValidationErrors(ex.getConstraintViolations());
-//            log.error("validation error");
-//            return buildResponseEntity(apiError);
-//        }
+////    @ExceptionHandler(ConstraintViolationException.class)
+////        protected ResponseEntity<Object> handleConstraintViolation(
+////                ConstraintViolationException ex) {
+////            AdviceResponse apiError = new AdviceResponse(BAD_REQUEST);
+////            apiError.setMessage("Validation error");
+////            apiError.addValidationErrors(ex.getConstraintViolations());
+////            log.error("validation error");
+////            return buildResponseEntity(apiError);
+////        }
 //
 //
 //
@@ -130,7 +131,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 ////            log.info("{} to {}", servletWebRequest.getHttpMethod(), servletWebRequest.getRequest().getServletPath());
 //            String error = "Malformed JSON request";
 //            log.error(error);
-//            return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
+//            return buildResponseEntity(new AdviceResponse(HttpStatus.BAD_REQUEST, error, ex));
 //        }
 //
 //        /**
@@ -146,7 +147,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //        protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
 //            String error = "Error writing JSON output";
 //            log.error(error);
-//            return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, error, ex));
+//            return buildResponseEntity(new AdviceResponse(HttpStatus.INTERNAL_SERVER_ERROR, error, ex));
 //        }
 //
 //        /**
@@ -161,7 +162,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //        @Override
 //        protected ResponseEntity<Object> handleNoHandlerFoundException(
 //                NoHandlerFoundException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-//            ApiError apiError = new ApiError(BAD_REQUEST);
+//            AdviceResponse apiError = new AdviceResponse(BAD_REQUEST);
 //            apiError.setMessage(String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
 //            apiError.setDebugMessage(ex.getMessage());
 //            log.error("missing handler");
@@ -171,10 +172,10 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //        /**
 //         * Handle javax.persistence.EntityNotFoundException
 //         */
-////        @ExceptionHandler(javax.persistence.EntityNotFoundException.class)
-////        protected ResponseEntity<Object> handleEntityNotFound(javax.persistence.EntityNotFoundException ex) {
-////            return buildResponseEntity(new ApiError(NOT_FOUND, ex));
-////        }
+//        @ExceptionHandler(javax.persistence.EntityNotFoundException.class)
+//        protected ResponseEntity<Object> handleEntityNotFound(javax.persistence.EntityNotFoundException ex) {
+//            return buildResponseEntity(new AdviceResponse(NOT_FOUND, ex));
+//        }
 //
 //    /**
 //     * Handle DataIntegrityViolationException, inspects the cause for different DB causes.
@@ -188,10 +189,10 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //                                                                      WebRequest request) {
 //            if (ex.getCause() instanceof ConstraintViolationException) {
 //                log.error("Database error");
-//                return buildResponseEntity(new ApiError(HttpStatus.CONFLICT, "Database error", ex.getCause()));
+//                return buildResponseEntity(new AdviceResponse(HttpStatus.CONFLICT, "Database error", ex.getCause()));
 //            }
 //            log.error("data integrity error "+ex.getLocalizedMessage());
-//            return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex));
+//            return buildResponseEntity(new AdviceResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex));
 //        }
 //
 //    /**
@@ -204,7 +205,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
 //        protected ResponseEntity<Object> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex,
 //                                                                          WebRequest request) {
-//            ApiError apiError = new ApiError(BAD_REQUEST);
+//            AdviceResponse apiError = new AdviceResponse(BAD_REQUEST);
 //            apiError.setMessage(String.format("The parameter '%s' of value '%s' could not be converted to type '%s'", ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName()));
 //            apiError.setDebugMessage(ex.getMessage());
 //            log.error("parameter conversion error");
@@ -214,17 +215,17 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //    @ExceptionHandler(AccessDeniedException.class)
 //    protected ResponseEntity<Object> handlePermissionDeniedException(AccessDeniedException ex,
 //                                                                      WebRequest request) {
-//        ApiError apiError = new ApiError(HttpStatus.FORBIDDEN);
+//        AdviceResponse apiError = new AdviceResponse(HttpStatus.FORBIDDEN);
 //        apiError.setMessage(ex.getMessage());
 //        apiError.setDebugMessage(ex.getMessage());
 //        log.error("permission denied error");
 //        return buildResponseEntity(apiError);
 //    }
 //
-//        private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
-//            log.error("returning Api error "+apiError.getMessage());
-//            return new ResponseEntity<>(apiError, apiError.getStatus());
-//        }
+//    private ResponseEntity<Object> buildResponseEntity(AdviceResponse adviceResponse) {
+//        log.error("returning Api error "+adviceResponse.getMessage());
+//        return new ResponseEntity<>(adviceResponse, adviceResponse.getStatus());
+//    }
 //
 //     @ExceptionHandler(EntityNotFoundException.class)
 //     @ResponseStatus(BAD_REQUEST)
@@ -233,7 +234,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //             WebRequest request
 //     ){
 //         log.error("Unknown error occurred", exception);
-//         ApiError apiError = new ApiError(BAD_REQUEST);
+//         AdviceResponse apiError = new AdviceResponse(BAD_REQUEST);
 //         apiError.setMessage(exception.getMessage());
 //         return buildResponseEntity(apiError);
 //     }
@@ -249,9 +250,8 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 //            Exception exception,
 //            WebRequest request){
 //        log.error("Unknown error occurred", exception);
-//        ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR);
+//        AdviceResponse apiError = new AdviceResponse(INTERNAL_SERVER_ERROR);
 //        apiError.setMessage("An Error occurred in the server side. \n"+exception.getMessage());
 //        return buildResponseEntity(apiError);
 //    }
-//
 //}

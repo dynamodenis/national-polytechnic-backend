@@ -177,7 +177,7 @@ public class UserController {
                         .readTimeout(180, TimeUnit.SECONDS)
                         .build();
 
-                User savedUser = sendSMS(user, client);
+                User savedUser = sendSMSSema(user, client);
 
                 if (configService.get().getAgepsw() == 1){
                     psws.setUserid(savedUser.getId());
@@ -293,6 +293,23 @@ public class UserController {
         User savedUser = userService.create(user);
 
         sendSMSService.PrepSms(messageBody, savedUser, client);
+
+
+        return savedUser;
+    }
+
+    private User sendSMSSema(User user, OkHttpClient client) {
+        MessageBodySema messageBodySema = new MessageBodySema();
+        Random ran = new Random();
+        Integer otp = ran.nextInt(100000);
+
+        user.setOtpNumber(otp);
+        Long otpExpiry = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30);
+        user.setOtpExpiration(otpExpiry);
+
+        User savedUser = userService.create(user);
+
+        sendSMSService.PrepSmsSema(messageBodySema, savedUser, client);
 
 
         return savedUser;
@@ -579,11 +596,11 @@ public class UserController {
                 .readTimeout(180, TimeUnit.SECONDS)
                 .build();
 
-        User savedUser = sendSMS(user, client);
+        User savedUser = sendSMSSema(user, client);
 
         user.setPassword(null);
 
-        sendSMS(user, client);
+        sendSMSSema(user, client);
 
         HashMap hashMap = new HashMap();
         hashMap.put("user", savedUser);
@@ -613,6 +630,26 @@ public class UserController {
         messageBody.setCallbackURL(callbackUrl);
 
         sendSMSService.sendSMS(messageBody, client);
+        String msg = "Message Sent.";
+        HashMap userzMap = new HashMap();
+
+        return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 1, msg, userzMap), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/sendSMSSema/{phone}")
+    public ResponseEntity<Response> sendSmsSema(@PathVariable String phone)
+    {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(180, TimeUnit.SECONDS)
+                .readTimeout(180, TimeUnit.SECONDS)
+                .build();
+        MessageBodySema messageBodySema = new MessageBodySema();
+        messageBodySema.setText("Easy Peasy.");
+        messageBodySema.setRecipients(phone);
+//        String callbackUrl = "http://34.67.196.163:8181/api/v1/sms_callback/callback/" + String.valueOf(1234567) + "/" + String.valueOf(7654321);
+//        messageBody.setCallbackURL(callbackUrl);
+
+        sendSMSService.sendSemaSMS(messageBodySema, client);
         String msg = "Message Sent.";
         HashMap userzMap = new HashMap();
 

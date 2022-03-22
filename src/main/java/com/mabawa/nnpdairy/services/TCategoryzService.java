@@ -29,10 +29,10 @@ public class TCategoryzService {
 
     public List<TCategoryz> getAllTList(){
         List<TCategoryz> tCategoryzList = tCategoryzRepository.getAllCategory();
-        tCategoryzList.forEach(tCategoryz -> {
-            List<TCategoryResources> tCategoryzResServiceList = tCategoryzResService.getTcategoryResources(tCategoryz.getId().toString());
-            tCategoryz.settCategoryResourcesList(tCategoryzResServiceList);
-        });
+//        tCategoryzList.forEach(tCategoryz -> {
+//            List<TCategoryResources> tCategoryzResServiceList = tCategoryzResService.getTcategoryResources(tCategoryz.getId().toString());
+//            tCategoryz.settCategoryResourcesList(tCategoryzResServiceList);
+//        });
         return tCategoryzList;
     }
 
@@ -51,7 +51,11 @@ public class TCategoryzService {
     }
 
     public List<TCategoryz> filterTCategoryz(String name, Pageable pageable){
-        return  tCategoryzRepository.getCategoryByNameLike(name, pageable);
+        List<TCategoryz> tCategoryzList = tCategoryzRepository.getCategoryByNameLike(name, pageable);
+        tCategoryzList.forEach(tCategoryz -> {
+            tCategoryz.setImageDownloads(tCategoryzResService.getTcategoryResourceString(tCategoryz.getId().toString()));
+        });
+        return tCategoryzList;
     }
 
     public Optional<TCategoryz> getTcategoryByName(String name){
@@ -76,7 +80,7 @@ public class TCategoryzService {
     }
 
     public List<TCategoryz> getNameContaining(String nme){
-        return tCategoryzRepository.findByNameContaining(nme);
+        return tCategoryzRepository.findByNameContainingIgnoreCase(nme);
     }
 
     public TCategoryz getJson(String tcategory){

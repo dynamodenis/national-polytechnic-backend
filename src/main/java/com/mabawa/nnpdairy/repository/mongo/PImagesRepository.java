@@ -6,10 +6,11 @@ import org.springframework.data.mongodb.repository.DeleteQuery;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PImagesRepository extends MongoRepository<PImages, String> {
-    @Query("{ 'productId' : ?0 }")
-    List<PImages> getProductImageByProductId(String productId);
+    @Query("{ 'id' : ?0 }")
+    Optional<PImages> getProductImageById(String id);
 
-    public void deleteByProductId(String productId);
+    public void deleteById(String id);
 }

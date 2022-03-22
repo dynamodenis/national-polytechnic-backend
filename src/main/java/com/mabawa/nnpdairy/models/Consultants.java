@@ -26,6 +26,7 @@ public class Consultants {
     private Timestamp created;
     private Boolean isavailsat;
     private Boolean isavailsun;
+    private String title;
 
     @Transient
     List<ConsultantsProfile> consultantsProfileList;
@@ -122,5 +123,12 @@ public class Consultants {
     }
     public void setIsavailsun(Boolean isavailsun) {
         this.isavailsun = isavailsun;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
     }
 }

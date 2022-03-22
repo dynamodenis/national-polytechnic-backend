@@ -9,8 +9,6 @@ public class ConsultantsProfile {
     @Id
     private String id;
 
-    private String consultantId;
-
     private String title;
 
     private Binary image;
@@ -22,13 +20,6 @@ public class ConsultantsProfile {
     }
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getConsultantId() {
-        return consultantId;
-    }
-    public void setConsultantId(String consultantId) {
-        this.consultantId = consultantId;
     }
 
     public String getTitle() {

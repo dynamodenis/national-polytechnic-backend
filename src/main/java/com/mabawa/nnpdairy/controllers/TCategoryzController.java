@@ -52,7 +52,7 @@ public class TCategoryzController {
             if (image != null && !image.isEmpty()){
                 try{
                     TCategoryResources tCategoryResources = new TCategoryResources();
-                    tCategoryResources.setTcategoryzId(tCategoryz.getId().toString());
+                    tCategoryResources.setId(tCategoryz.getId().toString());
                     tCategoryResources.setImageTitle(tCategoryz.getName());
                     tCategoryResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -90,7 +90,7 @@ public class TCategoryzController {
                 try{
                     TCategoryResources tCategoryResources = new TCategoryResources();
 
-                    tCategoryResources.setTcategoryzId(tCategoryz.getId().toString());
+                    tCategoryResources.setId(tCategoryz.getId().toString());
                     tCategoryResources.setImageTitle(tCategoryz.getName());
                     tCategoryResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -127,7 +127,7 @@ public class TCategoryzController {
             if (image != null && !image.isEmpty()){
                 tCategoryzResService.deleteTcategoryResources(id.toString());
                 try{
-                    tCategoryResources.setTcategoryzId(savedTCategoryz.getId().toString());
+                    tCategoryResources.setId(savedTCategoryz.getId().toString());
                     tCategoryResources.setImageTitle(savedTCategoryz.getName());
                     tCategoryResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -195,8 +195,7 @@ public class TCategoryzController {
             return new ResponseEntity<Response>(this.TResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         } else {
             TCategoryz tCategoryz = categoryOptional.get();
-            List<TCategoryResources> tCategoryResourcesList = tCategoryzResService.getTcategoryResources(tCategoryz.getId().toString());
-            tCategoryz.settCategoryResourcesList(tCategoryResourcesList);
+            tCategoryz.setImageDownloads(tCategoryzResService.getTcategoryResourceString(tCategoryz.getId().toString()));
 
             HashMap catzMap = new HashMap();
             catzMap.put("tcategory", tCategoryz);
@@ -216,6 +215,22 @@ public class TCategoryzController {
 
             HashMap catzMap = new HashMap();
             catzMap.put("tcategory", categoryList);
+            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
+        }
+    }
+
+    @GetMapping(path = "/t-category-resources/{id}")
+    public ResponseEntity<Response> getTCategoryResources(@PathVariable UUID id)
+    {
+        Optional<TCategoryResources> categoryOptional = tCategoryzResService.getTcategoryResource(id.toString());
+        if (!categoryOptional.isPresent()) {
+            String msg = "No resources found with Category By Id Provided.";
+            return new ResponseEntity<Response>(this.TResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }else
+        {
+            HashMap catzMap = new HashMap();
+            catzMap.put("tcategoryres", categoryOptional.get());
+
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
         }
     }

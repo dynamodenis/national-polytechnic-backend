@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -43,6 +44,11 @@ public class ConsultantController {
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> addNewConsultant(@RequestPart("consultant") String consultant, @RequestPart("image") MultipartFile image) {
         Consultants consultants = consultantService.getJson(consultant);
+        if (consultants.getTitle().isEmpty())
+        {
+            String msg = "Please provide Consultant Title.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
         if (!consultants.getName().isEmpty()) {
             Optional<Consultants> consultantsOptional = consultantService.getConsultantByName(consultants.getName());
             if (consultantsOptional.isPresent()) {
@@ -58,7 +64,7 @@ public class ConsultantController {
                 if (image != null && !image.isEmpty()){
                     try{
                         ConsultantsProfile consultantsProfile = new ConsultantsProfile();
-                        consultantsProfile.setConsultantId(consultants.getId().toString());
+                        consultantsProfile.setId(consultants.getId().toString());
                         consultantsProfile.setTitle(consultants.getName());
                         consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -104,7 +110,7 @@ public class ConsultantController {
 
                 try{
                     ConsultantsProfile consultantsProfile = new ConsultantsProfile();
-                    consultantsProfile.setConsultantId(consultants.getId().toString());
+                    consultantsProfile.setId(consultants.getId().toString());
                     consultantsProfile.setTitle(consultants.getName());
                     consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -144,7 +150,7 @@ public class ConsultantController {
 
                 try{
                     ConsultantsProfile consultantsProfile = new ConsultantsProfile();
-                    consultantsProfile.setConsultantId(savedConsultant.getId().toString());
+                    consultantsProfile.setId(savedConsultant.getId().toString());
                     consultantsProfile.setTitle(savedConsultant.getName());
                     consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -173,7 +179,7 @@ public class ConsultantController {
         List<Consultants> consultantsList = consultantService.getAllConsultants();
         consultantsList.forEach(consultants -> {
             String consultantId = consultants.getId().toString();
-            consultants.setConsultantsProfileList(consultantsProfileService.getConsultantProf(consultantId));
+            consultants.setImageDownloads(consultantsProfileService.getConsultantProfImage(consultantId));
         });
 
         HashMap suppzMap = new HashMap();
@@ -202,10 +208,10 @@ public class ConsultantController {
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         } else {
             Consultants consultants = consultantsOptional.get();
-            consultants.setConsultantsProfileList(consultantsProfileService.getConsultantProf(consultants.getId().toString()));
+            consultants.setImageDownloads(consultantsProfileService.getConsultantProfImage(consultants.getId().toString()));
             HashMap suppzMap = new HashMap();
             suppzMap.put("consultant", consultants);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
+            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
         }
     }
 
@@ -228,9 +234,36 @@ public class ConsultantController {
             String msg = "Missing Params.";
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
+        if (appointments.getDuration().toString().isEmpty() || appointments.getDfactor().toString().isEmpty()){
+            String msg = "Missing Params.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
         Optional<Appointments> optionalAppointments = appointmentService.getUserAppointment(appointments.getAppuser(), appointments.getConsultant(), 1);
         if (optionalAppointments.isPresent()){
             String msg = "Provided User already has an OPEN appointment with selected Consultant .";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+
+        Timestamp eTime = new Timestamp(new Date().getTime());
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(appointments.getStime().getTime());
+        if (appointments.getDfactor().equals("mins")){
+            calendar.add(Calendar.MINUTE, appointments.getDuration());
+        }else if (appointments.getDfactor().equals("hrs")){
+            calendar.add(Calendar.HOUR, appointments.getDuration());
+        }
+        else
+        {
+            String msg = "Invalid timing factor provided.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        eTime = new Timestamp(calendar.getTime().getTime());
+
+        List<Appointments> appointmentsList = appointmentService.getAppointmentListBetweenStime(appointments.getConsultant(), appointments.getStime(), eTime, 2);
+        if (!appointmentsList.isEmpty())
+        {
+            String msg = "Consultant provided already has an Appointment on timimg provided.";
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
         LocalDateTime lastLocal = LocalDateTime.now();
@@ -254,6 +287,30 @@ public class ConsultantController {
             String msg = "Appointment not found by ID provided.";
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
+
+        Timestamp eTime = new Timestamp(new Date().getTime());
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(appointments.getStime().getTime());
+        if (appointments.getDfactor().equals("mins")){
+            calendar.add(Calendar.MINUTE, appointments.getDuration());
+        }else if (appointments.getDfactor().equals("hrs")){
+            calendar.add(Calendar.HOUR, appointments.getDuration());
+        }
+        else
+        {
+            String msg = "Invalid timing factor provided.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        eTime = new Timestamp(calendar.getTime().getTime());
+
+        List<Appointments> appointmentsList = appointmentService.getAppointmentListBetweenStime(appointments.getConsultant(), appointments.getStime(), eTime, 2);
+        if (!appointmentsList.isEmpty())
+        {
+            String msg = "Consultant provided already has an Appointment on timimg provided.";
+            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+
         Appointments savedAppointment = optionalAppointments.get();
         appointments.setCreated(savedAppointment.getCreated());
         appointments.setId(savedAppointment.getId());

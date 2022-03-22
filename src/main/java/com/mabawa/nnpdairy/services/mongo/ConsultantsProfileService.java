@@ -27,7 +27,7 @@ public class ConsultantsProfileService {
     }
 
     public List<ConsultantsProfile> getConsultantProf(String conId){
-        List<ConsultantsProfile> consultantsProfileList = consultantsProfileRepository.getConsultantsProfileByConsultantId(conId);
+        List<ConsultantsProfile> consultantsProfileList = consultantsProfileRepository.getConsultantsProfileById(conId);
         consultantsProfileList.forEach(consultantsProfile -> {
             if (consultantsProfile.getImage() != null) {
                 consultantsProfile.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData())));
@@ -37,7 +37,7 @@ public class ConsultantsProfileService {
     }
 
     public String getConsultantProfImage(String conId){
-        List<ConsultantsProfile> consultantsProfileList = consultantsProfileRepository.getConsultantsProfileByConsultantId(conId);
+        List<ConsultantsProfile> consultantsProfileList = consultantsProfileRepository.getConsultantsProfileById(conId);
         String[] imageDonwloads = {""};
         consultantsProfileList.forEach(consultantsProfile -> {
             if (consultantsProfile.getImage() != null) {
@@ -48,10 +48,10 @@ public class ConsultantsProfileService {
     }
 
     public String addProfile(ConsultantsProfile consultantsProfile){
-        return  consultantsProfileRepository.insert(consultantsProfile).getConsultantId();
+        return  consultantsProfileRepository.save(consultantsProfile).getId();
     }
 
     public void deleteConsultantProfile(String conId){
-        consultantsProfileRepository.deleteConsultantsProfileByConsultantId(conId);
+        consultantsProfileRepository.deleteConsultantsProfileById(conId);
     }
 }

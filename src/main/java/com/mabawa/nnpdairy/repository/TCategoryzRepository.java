@@ -43,5 +43,5 @@ public interface TCategoryzRepository extends JpaRepository<TCategoryz, UUID> {
     @Query("DELETE FROM TCategoryz tcategoryz")
     void deleteAllCategory();
 
-    List<TCategoryz> findByNameContaining(String name);
+    List<TCategoryz> findByNameContainingIgnoreCase(String name);
 }

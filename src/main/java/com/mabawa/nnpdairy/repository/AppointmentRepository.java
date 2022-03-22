@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,4 +41,5 @@ public interface AppointmentRepository extends JpaRepository<Appointments, UUID>
 
     List<Appointments> findAllByConsultantAndStatus(UUID appuser, Integer status);
 
+    List<Appointments> findAppointmentsByConsultantAndStimeBetweenAndStatusIsNot(UUID consultant, Timestamp stime, Timestamp etime, Integer status);
 }

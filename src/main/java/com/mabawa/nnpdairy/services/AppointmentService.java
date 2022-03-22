@@ -5,6 +5,7 @@ import com.mabawa.nnpdairy.repository.AppointmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +43,10 @@ public class AppointmentService {
 
     public List<Appointments> filterUserAppointments(UUID appuser, Integer status){
         return  appointmentRepository.findAllByAppuserAndStatus(appuser, status);
+    }
+
+    public List<Appointments> getAppointmentListBetweenStime(UUID consultant, Timestamp stime, Timestamp etime, Integer status){
+        return appointmentRepository.findAppointmentsByConsultantAndStimeBetweenAndStatusIsNot(consultant, stime, etime, status);
     }
 
     public Appointments create(Appointments appointments){

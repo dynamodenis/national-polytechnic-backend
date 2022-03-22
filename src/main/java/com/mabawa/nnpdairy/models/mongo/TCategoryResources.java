@@ -9,8 +9,6 @@ public class TCategoryResources {
     @Id
     private String id;
 
-    private String tcategoryzId;
-
     private Binary image;
 
     private String imageTitle;
@@ -22,13 +20,6 @@ public class TCategoryResources {
     }
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getTcategoryzId() {
-        return tcategoryzId;
-    }
-    public void setTcategoryzId(String tcategoryzId) {
-        this.tcategoryzId = tcategoryzId;
     }
 
     public Binary getImage() {

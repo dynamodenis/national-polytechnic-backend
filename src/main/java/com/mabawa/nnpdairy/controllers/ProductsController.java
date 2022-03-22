@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -56,7 +55,7 @@ public class ProductsController {
             if (image != null && !image.isEmpty()){
                 try{
                     PImages pImages = new PImages();
-                    pImages.setProductId(products.getId().toString());
+                    pImages.setId(products.getId().toString());
                     pImages.setpName(products.getName());
                     pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -99,7 +98,7 @@ public class ProductsController {
                     pImagesService.deleteProductImage(products.getId().toString());
 
                     PImages pImages = new PImages();
-                    pImages.setProductId(products.getId().toString());
+                    pImages.setId(products.getId().toString());
                     pImages.setpName(products.getName());
                     pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -112,7 +111,7 @@ public class ProductsController {
                     System.out.printf("Error : " + ex.toString());
                 }
             }else{
-                pImagesList = pImagesService.getProductImage(products.getId().toString());
+                pImagesList = pImagesService.getProductImageList(products.getId().toString());
             }
 
             products.setpImages(pImagesList);
@@ -139,7 +138,7 @@ public class ProductsController {
                     pImagesService.deleteProductImage(id.toString());
 
                     PImages pImages = new PImages();
-                    pImages.setProductId(savedProd.getId().toString());
+                    pImages.setId(savedProd.getId().toString());
                     pImages.setpName(savedProd.getName());
                     pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
@@ -152,7 +151,7 @@ public class ProductsController {
                     System.out.printf("Error : " + ex.toString());
                 }
             }else{
-                pImagesList = pImagesService.getProductImage(savedProd.getId().toString());
+                pImagesList = pImagesService.getProductImageList(savedProd.getId().toString());
             }
 
             savedProd.setpImages(pImagesList);
@@ -190,8 +189,9 @@ public class ProductsController {
             return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }else{
             Products products = productsOptional.get();
-            List<PImages> pImagesList = pImagesService.getProductImage(products.getId().toString());
-            products.setpImages(pImagesList);
+//            List<PImages> pImagesList = pImagesService.getProductImageList(products.getId().toString());
+//            products.setpImages(pImagesList);
+            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
 
             HashMap stockMap = new HashMap();
             stockMap.put("product", products);
@@ -208,8 +208,7 @@ public class ProductsController {
             return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }else{
             Products products = productsOptional.get();
-            List<PImages> pImagesList = pImagesService.getProductImage(products.getId().toString());
-            products.setpImages(pImagesList);
+            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
 
             HashMap stockMap = new HashMap();
             stockMap.put("product", products);
@@ -228,8 +227,9 @@ public class ProductsController {
         }else{
             productsList.forEach(products -> {
                 String prodId = products.getId().toString();
-                products.setpImages(pImagesService.getProductImage(prodId));
+                products.setpImage(pImagesService.getProductImage(prodId));
             });
+
 
             HashMap stockMap = new HashMap();
             stockMap.put("product", productsList);
@@ -246,10 +246,6 @@ public class ProductsController {
             msg = "Product(s) doesn't exists By Name Provided.";
             return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }else{
-            productsList.forEach(products -> {
-                String prodId = products.getId().toString();
-                products.setpImages(pImagesService.getProductImage(prodId));
-            });
 
             HashMap stockMap = new HashMap();
             stockMap.put("product", productsList);
@@ -266,13 +262,22 @@ public class ProductsController {
             msg = "Product(s) doesn't exists By Name Provided.";
             return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }else{
-            productsList.forEach(products -> {
-                String prodId = products.getId().toString();
-                products.setpImages(pImagesService.getProductImage(prodId));
-            });
-
             HashMap stockMap = new HashMap();
             stockMap.put("product", productsList);
+            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
+        }
+    }
+
+    @GetMapping(path = "products-resources/{id}")
+    public ResponseEntity<Response> getProductResource(@PathVariable UUID id)
+    {
+        Optional<PImages> optionalPImages = pImagesService.getProductResource(id.toString());
+        if(!optionalPImages.isPresent()){
+            String msg = "No resources found with Category By Id Provided.";
+            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }else{
+            HashMap stockMap = new HashMap();
+            stockMap.put("product", optionalPImages.get());
             return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
         }
     }

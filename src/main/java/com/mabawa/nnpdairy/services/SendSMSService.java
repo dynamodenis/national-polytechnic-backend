@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mabawa.nnpdairy.constants.Constants;
 import com.mabawa.nnpdairy.models.MessageBody;
+import com.mabawa.nnpdairy.models.MessageBodySema;
 import com.mabawa.nnpdairy.models.MessagesSent;
 import com.mabawa.nnpdairy.models.User;
 import com.mabawa.nnpdairy.repository.MessageSentRepository;
@@ -71,6 +72,25 @@ public class SendSMSService {
         sendSMS(messageBody, client);
     }
 
+    public void PrepSmsSema(MessageBodySema messageBodySema, User user, OkHttpClient client)
+    {
+        messageBodySema.setText("Dear " + user.getName() + ", your verification to access NNP Diary platform code is " + String.valueOf(user.getOtpNumber()));
+        messageBodySema.setRecipients(user.getPhone());
+
+        LocalDateTime lastLocal = LocalDateTime.now();
+        final MessagesSent messagesSent = new MessagesSent();
+        messagesSent.setTextMessage(messageBodySema.getText());
+        messagesSent.setSent(0);
+        messagesSent.setDate(Timestamp.valueOf(lastLocal));
+        messagesSent.setMsisdn(messagesSent.getMsisdn());
+        messagesSent.setStatus(Constants.WAITING_FEEDBACK);
+
+        MessagesSent sent = messageSentRepository.saveAndFlush(messagesSent);
+//        String callbackUrl = "http://34.67.196.163:8181/api/v1/sms_callback/callback/" + String.valueOf(sent.getId()) + "/" + String.valueOf(sent.getId());
+//        messageBody.setCallbackURL(callbackUrl);
+//        sendSMS(messageBody, client);
+    }
+
     public void sendResetPasswordSms(User user, OkHttpClient client) throws IOException{
         MessageBody messageBody = new MessageBody();
         Random ran = new Random();
@@ -92,5 +112,28 @@ public class SendSMSService {
         String callbackUrl = "http://34.67.196.163:8181/api/v1/sms_callback/callback/" + String.valueOf(sent.getId()) + "/" + String.valueOf(sent.getId());
         messageBody.setCallbackURL(callbackUrl);
         sendSMS(messageBody, client);
+    }
+
+    public void sendSemaSMS(MessageBodySema messageBodySema, OkHttpClient client)
+    {
+        try{
+            Gson gson =new GsonBuilder().create();
+            String messageBodyJson = gson.toJson(messageBodySema);
+
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, messageBodyJson);
+
+            Request request = new Request.Builder()
+                    .url(Constants.SMS_SANDBOX_URL)
+                    .post(body)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("AuthToken", Constants.X_TOKEN)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            System.out.println(response);
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

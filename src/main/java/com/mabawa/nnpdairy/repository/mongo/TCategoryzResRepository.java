@@ -5,9 +5,12 @@ import com.mabawa.nnpdairy.models.mongo.TCategoryResources;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TCategoryzResRepository extends MongoRepository<TCategoryResources, String> {
-    public List<TCategoryResources> getTCategoryResourcesByTcategoryzId(String tcategoryzId);
+    public List<TCategoryResources> getTCategoryResourcesById(String id);
 
-    public void deleteTCategoryResourcesByTcategoryzId(String tcategoryzId);
+    public void deleteTCategoryResourcesById(String id);
+
+    public Optional<TCategoryResources> findTCategoryResourcesById(String id);
 }

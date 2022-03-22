@@ -39,7 +39,7 @@ public class Products {
     private List<PImages> pImages;
 
     @Transient
-    private List<String> imageList;
+    private String pImage;
 
 
     public UUID getId() {
@@ -182,10 +182,10 @@ public class Products {
         this.pImages = pImages;
     }
 
-    public List<String> getImageList() {
-        return imageList;
+    public String getpImage() {
+        return pImage;
     }
-    public void setImageList(List<String> imageList) {
-        this.imageList = imageList;
+    public void setpImage(String pImage) {
+        this.pImage = pImage;
     }
 }
