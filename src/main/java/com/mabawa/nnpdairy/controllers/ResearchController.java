@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -45,147 +46,141 @@ public class ResearchController {
             return new ResponseEntity<Response>(this.RResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
 
-        Optional<Research> researchOptional = researchService.getResearchByDescription(research.getDescription());
-        if (researchOptional.isPresent()){
+        Optional<Research> optionalResearch = researchService.getResearchByDescription(research.getDescription());
+        if (optionalResearch.isPresent()) {
             String msg = "A research already exists By Description Provided.";
             return new ResponseEntity<Response>(this.RResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            LocalDateTime lastLocal = LocalDateTime.now();
-            research.setCreated(Timestamp.valueOf(lastLocal));
-
-            research = researchService.create(research);
-
-            RMaterials rMaterials = new RMaterials();
-            if (content != null){
-                rMaterials.setResearchId(research.getId().toString());
-                rMaterials.setTitle(topic);
-                rMaterials.setUrl(url);
-                try{
-                    List<RResources> rResourcesList = new ArrayList<>();
-                    for (MultipartFile con : content)
-                    {
-                        RResources rResources = new RResources();
-                        rResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
-
-                        rResourcesList.add(rResources);
-
-                        rResources.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(rResources.getImage().getData())));
-                    }
-                    rMaterials.setrResources(rResourcesList);
-
-                    String resStr = rResourceService.addResources(rMaterials);
-
-                    System.out.printf("Resources : " + resStr);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
-                }
-            }
-            List<RMaterials> rMaterialsList = new ArrayList<>();
-            rMaterialsList.add(rMaterials);
-
-            research.setrMaterials(rMaterialsList);
-
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("research", research);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
         }
+
+        LocalDateTime lastLocal = LocalDateTime.now();
+        research.setCreated(Timestamp.valueOf(lastLocal));
+
+        research = researchService.create(research);
+
+        RMaterials rMaterials = new RMaterials();
+        if (content != null){
+            rMaterials.setResearchId(research.getId().toString());
+            rMaterials.setTitle(topic);
+            rMaterials.setUrl(url);
+            try{
+                List<RResources> rResourcesList = new ArrayList<>();
+                for (MultipartFile con : content)
+                {
+                    RResources rResources = new RResources();
+                    rResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
+
+                    rResourcesList.add(rResources);
+
+                    rResources.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(rResources.getImage().getData())));
+                }
+                rMaterials.setrResources(rResourcesList);
+
+                String resStr = rResourceService.addResources(rMaterials);
+
+                System.out.printf("Resources : " + resStr);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
+            }
+        }
+        List<RMaterials> rMaterialsList = new ArrayList<>();
+        rMaterialsList.add(rMaterials);
+
+        research.setrMaterials(rMaterialsList);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("research", research);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
     }
 
     @PutMapping(path = {"edit-research/{id}"}, consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> editResearch(@PathVariable UUID id, @RequestPart("research") String researchStr, String topic, String url, @RequestPart("images") List<MultipartFile> content) {
         Research research = researchService.getJson(researchStr);
-        Optional<Research> optionalResearch = researchService.findById(id);
-        if (!optionalResearch.isPresent()) {
-            String msg = "No research found By ID Provided.";
-            return new ResponseEntity<Response>(this.RResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            Research savedResearch = optionalResearch.get();
-            research.setId(savedResearch.getId());
-            research = researchService.update(research);
+        Research savedResearch = researchService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No research found By ID Provided."));
 
-            RMaterials rMaterials = new RMaterials();
-            if (content != null){
-                rResourceService.deleteResources(savedResearch.getId().toString());
+        research.setId(savedResearch.getId());
+        research = researchService.update(research);
 
-                rMaterials.setResearchId(research.getId().toString());
-                rMaterials.setTitle(topic);
-                rMaterials.setUrl(url);
-                try{
-                    List<RResources> rResourcesList = new ArrayList<>();
-                    for (MultipartFile con : content)
-                    {
-                        RResources rResources = new RResources();
-                        rResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
+        RMaterials rMaterials = new RMaterials();
+        if (content != null){
+            rResourceService.deleteResources(savedResearch.getId().toString());
 
-                        rResourcesList.add(rResources);
+            rMaterials.setResearchId(research.getId().toString());
+            rMaterials.setTitle(topic);
+            rMaterials.setUrl(url);
+            try{
+                List<RResources> rResourcesList = new ArrayList<>();
+                for (MultipartFile con : content)
+                {
+                    RResources rResources = new RResources();
+                    rResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
 
-                        rResources.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(rResources.getImage().getData())));
-                    }
-                    rMaterials.setrResources(rResourcesList);
+                    rResourcesList.add(rResources);
 
-                    String resStr = rResourceService.addResources(rMaterials);
-
-                    System.out.printf("Resources : " + resStr);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
+                    rResources.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(rResources.getImage().getData())));
                 }
+                rMaterials.setrResources(rResourcesList);
+
+                String resStr = rResourceService.addResources(rMaterials);
+
+                System.out.printf("Resources : " + resStr);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
-            List<RMaterials> rMaterialsList = new ArrayList<>();
-            rMaterialsList.add(rMaterials);
-
-            research.setrMaterials(rMaterialsList);
-
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("research", research);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
         }
+        List<RMaterials> rMaterialsList = new ArrayList<>();
+        rMaterialsList.add(rMaterials);
+
+        research.setrMaterials(rMaterialsList);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("research", research);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
     }
 
     @PutMapping(path = {"edit-research-resources/{id}"}, consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> editResearchResources(@PathVariable UUID id, String url, @RequestPart("images") List<MultipartFile> content) {
-        Optional<Research> optionalResearch = researchService.findById(id);
-        if (!optionalResearch.isPresent()) {
-            String msg = "No research found By ID Provided.";
-            return new ResponseEntity<Response>(this.RResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            Research savedResearch = optionalResearch.get();
+        Research savedResearch = researchService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No research found By ID Provided."));
 
-            RMaterials rMaterials = new RMaterials();
-            if (content != null){
-                rResourceService.deleteResources(id.toString());
+        RMaterials rMaterials = new RMaterials();
+        if (content != null){
+            rResourceService.deleteResources(id.toString());
 
-                rMaterials.setResearchId(id.toString());
-                rMaterials.setTitle(savedResearch.getTopic());
-                rMaterials.setUrl(url);
-                try{
-                    List<RResources> rResourcesList = new ArrayList<>();
-                    for (MultipartFile con : content)
-                    {
-                        RResources rResources = new RResources();
-                        rResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
+            rMaterials.setResearchId(id.toString());
+            rMaterials.setTitle(savedResearch.getTopic());
+            rMaterials.setUrl(url);
+            try{
+                List<RResources> rResourcesList = new ArrayList<>();
+                for (MultipartFile con : content)
+                {
+                    RResources rResources = new RResources();
+                    rResources.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
 
-                        rResourcesList.add(rResources);
+                    rResourcesList.add(rResources);
 
-                        rResources.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(rResources.getImage().getData())));
-                    }
-                    rMaterials.setrResources(rResourcesList);
-
-                    String resStr = rResourceService.addResources(rMaterials);
-
-                    System.out.printf("Resources : " + resStr);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
+                    rResources.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(rResources.getImage().getData())));
                 }
+                rMaterials.setrResources(rResourcesList);
+
+                String resStr = rResourceService.addResources(rMaterials);
+
+                System.out.printf("Resources : " + resStr);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
-            List<RMaterials> rMaterialsList = new ArrayList<>();
-            rMaterialsList.add(rMaterials);
-
-            savedResearch.setrMaterials(rMaterialsList);
-
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("research", savedResearch);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
         }
+        List<RMaterials> rMaterialsList = new ArrayList<>();
+        rMaterialsList.add(rMaterials);
+
+        savedResearch.setrMaterials(rMaterialsList);
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("research", savedResearch);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
     }
 
     @GetMapping
@@ -199,31 +194,24 @@ public class ResearchController {
 
     @GetMapping(path = {"/{id}"})
     public ResponseEntity<Response> getResearchById(@PathVariable UUID id) {
-        Optional<Research> optionalResearch = researchService.findById(id);
-        if (!optionalResearch.isPresent()) {
-            String msg = "Research doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.RResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            Research research = optionalResearch.get();
-            research.setrMaterials(rResourceService.getResearchResources(research.getId().toString()));
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("research", research);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
-        }
+        Research research = researchService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Research doesn't exists By ID Provided."));
+
+        research.setrMaterials(rResourceService.getResearchResources(research.getId().toString()));
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("research", research);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
     }
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteResearchById(@PathVariable UUID id) {
-        Optional<Research> optionalResearch = researchService.findById(id);
-        if (!optionalResearch.isPresent()) {
-            String msg = "Research doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.RResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            rResourceService.deleteResources(id.toString());
-            researchService.deleteResearchById(id);
+        Research research = researchService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Research doesn't exists By ID Provided."));
 
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        rResourceService.deleteResources(id.toString());
+        researchService.deleteResearchById(id);
+
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {

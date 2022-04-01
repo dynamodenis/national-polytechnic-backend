@@ -29,10 +29,9 @@ public class TCategoryzService {
 
     public List<TCategoryz> getAllTList(){
         List<TCategoryz> tCategoryzList = tCategoryzRepository.getAllCategory();
-//        tCategoryzList.forEach(tCategoryz -> {
-//            List<TCategoryResources> tCategoryzResServiceList = tCategoryzResService.getTcategoryResources(tCategoryz.getId().toString());
-//            tCategoryz.settCategoryResourcesList(tCategoryzResServiceList);
-//        });
+        tCategoryzList.forEach(tCategoryz -> {
+            tCategoryz.setImageDownloads(tCategoryzResService.getTcategoryResourceString(tCategoryz.getId().toString()));
+        });
         return tCategoryzList;
     }
 

@@ -11,7 +11,6 @@ public class AdviceResponse {
     private HttpStatus status;
     private String message;
     private String debugMessage;
-    private Throwable cause;
 
     public AdviceResponse(HttpStatus httpStatus) {
         this.status = httpStatus;
@@ -20,7 +19,7 @@ public class AdviceResponse {
     public AdviceResponse(HttpStatus conflict, String msg, Throwable cause) {
         this.status = conflict;
         this.message = msg;
-        this.cause = cause;
+        this.debugMessage = cause.getLocalizedMessage();
     }
 
     public AdviceResponse(HttpStatus notFound, EntityNotFoundException ex) {

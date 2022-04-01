@@ -1,9 +1,12 @@
 package com.mabawa.nnpdairy.services;
 
+import java.lang.reflect.Type;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.mabawa.nnpdairy.models.Products;
 import com.mabawa.nnpdairy.models.Response;
 import com.mabawa.nnpdairy.models.mongo.PImages;
+import com.mabawa.nnpdairy.models.mongo.StockUpload;
 import com.mabawa.nnpdairy.repository.ProductsRepository;
 import com.mabawa.nnpdairy.services.mongo.PImagesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +100,15 @@ public class ProductsService {
         Products products = gson.fromJson(product, Products.class);
 
         return products;
+    }
+
+    public List<StockUpload> getStockUploadList(String stockUploads)
+    {
+        Type type = new TypeToken<List<StockUpload>>(){}.getType();
+
+        List<StockUpload> stockUploadList = gson.fromJson(stockUploads, type);
+
+        return stockUploadList;
     }
 
 }

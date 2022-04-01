@@ -1,10 +1,7 @@
 package com.mabawa.nnpdairy.controllers;
 
 import com.mabawa.nnpdairy.constants.Constants;
-import com.mabawa.nnpdairy.models.MarketplaceTypes;
-import com.mabawa.nnpdairy.models.PCategoryz;
-import com.mabawa.nnpdairy.models.Response;
-import com.mabawa.nnpdairy.models.TCategoryz;
+import com.mabawa.nnpdairy.models.*;
 import com.mabawa.nnpdairy.services.MarketplaceService;
 import com.mabawa.nnpdairy.services.PCategoryzService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -32,49 +30,41 @@ public class PCategoryzController {
 
     @PostMapping
     public ResponseEntity<Response> addNewTCategory(@RequestBody PCategoryz pCategoryz) {
-        Optional<PCategoryz> catzOptional = pCategoryzService.getTcategoryByName(pCategoryz.getName());
-        if (catzOptional.isPresent()) {
+        Optional<PCategoryz> optionalPCategoryz = pCategoryzService.getTcategoryByName(pCategoryz.getName());
+        if (optionalPCategoryz.isPresent()) {
             String msg = "A Category already exists By Name Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            LocalDateTime lastLocal = LocalDateTime.now();
-            pCategoryz.setInit_dte(Timestamp.valueOf(lastLocal));
-            pCategoryz = pCategoryzService.create(pCategoryz);
-
-            HashMap catzMap = new HashMap();
-            catzMap.put("pcategory", pCategoryz);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
+            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
+        LocalDateTime lastLocal = LocalDateTime.now();
+        pCategoryz.setInit_dte(Timestamp.valueOf(lastLocal));
+        pCategoryz = pCategoryzService.create(pCategoryz);
+
+        HashMap catzMap = new HashMap();
+        catzMap.put("pcategory", pCategoryz);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
     }
 
     @PutMapping(path = "/{id}")
     public ResponseEntity<Response> editCategory(@PathVariable UUID id, @RequestBody PCategoryz pCategoryz) {
-        Optional<PCategoryz> catzOptional = pCategoryzService.getTcategoryById(id);
-        if (!catzOptional.isPresent()) {
-            String msg = "A Category doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            PCategoryz pCategoryzSaved = catzOptional.get();
-            pCategoryz.setId(pCategoryzSaved.getId());
+        PCategoryz pCategoryzSaved = pCategoryzService.getTcategoryById(id)
+                .orElseThrow(()-> new EntityNotFoundException("A Category doesn't exists By ID Provided."));
 
-            pCategoryz = pCategoryzService.update(pCategoryz);
+        pCategoryz.setId(pCategoryzSaved.getId());
 
-            HashMap catzMap = new HashMap();
-            catzMap.put("pcategory", pCategoryz);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
-        }
+        pCategoryz = pCategoryzService.update(pCategoryz);
+
+        HashMap catzMap = new HashMap();
+        catzMap.put("pcategory", pCategoryz);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], catzMap);
     }
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteCategoryById(@PathVariable UUID id) {
-        Optional<PCategoryz> categoryOptional = pCategoryzService.getTcategoryById(id);
-        if (!categoryOptional.isPresent()) {
-            String msg = "No such Category By Id Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            pCategoryzService.deleteTcategory(id);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        PCategoryz category = pCategoryzService.getTcategoryById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No such Category By Id Provided."));
+
+        pCategoryzService.deleteTcategory(id);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     @DeleteMapping(path = {"/deleteAll"})
@@ -103,16 +93,12 @@ public class PCategoryzController {
 
     @GetMapping(path = {"/{id}"})
     public ResponseEntity<Response> getCategoryById(@PathVariable UUID id) {
-        Optional<PCategoryz> categoryOptional = pCategoryzService.getTcategoryById(id);
-        if (!categoryOptional.isPresent()) {
-            String msg = "No such Category By Id Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
+        PCategoryz category = pCategoryzService.getTcategoryById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No such Category By Id Provided."));
 
-            HashMap catzMap = new HashMap();
-            catzMap.put("mcategory", categoryOptional.get());
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
-        }
+        HashMap catzMap = new HashMap();
+        catzMap.put("mcategory", category);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], catzMap);
     }
 
     @GetMapping(path = {"/filter/{name}"})

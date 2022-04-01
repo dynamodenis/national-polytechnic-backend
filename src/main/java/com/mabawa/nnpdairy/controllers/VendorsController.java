@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -27,19 +28,19 @@ public class VendorsController {
     @PostMapping
     public ResponseEntity<Response> addNewSupplier(@RequestBody Vendors vendors) {
         if (!vendors.getName().isEmpty()) {
-            Optional<Vendors> vendorOptional = vendorsService.getVendorByName(vendors.getName());
-            if (vendorOptional.isPresent()) {
+            Optional<Vendors> optionalVendors = vendorsService.getVendorByName(vendors.getName());
+            if (optionalVendors.isPresent()){
                 String msg = "A Vendor already exists By Name Provided.";
                 return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-            } else {
-                LocalDateTime lastLocal = LocalDateTime.now();
-                vendors.setCreated(Timestamp.valueOf(lastLocal));
-                vendors = vendorsService.create(vendors);
-
-                HashMap suppzMap = new HashMap();
-                suppzMap.put("vendor", vendors);
-                return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
             }
+
+            LocalDateTime lastLocal = LocalDateTime.now();
+            vendors.setCreated(Timestamp.valueOf(lastLocal));
+            vendors = vendorsService.create(vendors);
+
+            HashMap suppzMap = new HashMap();
+            suppzMap.put("vendor", vendors);
+            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
         } else {
             String msg = "Missing Params.";
             return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
@@ -48,19 +49,15 @@ public class VendorsController {
 
     @PutMapping({"edit-vendor/{id}"})
     public ResponseEntity<Response> editVendor(@PathVariable UUID id, @RequestBody Vendors vendors) {
-        Optional<Vendors> optionalVendors = vendorsService.findById(vendors.getId());
-        if (!optionalVendors.isPresent()) {
-            String msg = "No Vendor found By ID Provided.";
-            return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            Vendors savedVendor = optionalVendors.get();
-            vendors.setId(savedVendor.getId());
-            vendors = vendorsService.update(vendors);
+        Vendors savedVendor = vendorsService.findById(vendors.getId())
+                .orElseThrow(()-> new EntityNotFoundException("No Vendor found By ID Provided."));
 
-            HashMap hashMap = new HashMap();
-            hashMap.put("vendor", vendors);
-            return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
-        }
+        vendors.setId(savedVendor.getId());
+        vendors = vendorsService.update(vendors);
+
+        HashMap hashMap = new HashMap();
+        hashMap.put("vendor", vendors);
+        return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
     }
 
     @GetMapping
@@ -74,27 +71,19 @@ public class VendorsController {
 
     @GetMapping(path = {"/{id}"})
     public ResponseEntity<Response> getVendorById(@PathVariable UUID id) {
-        Optional<Vendors> vendorOptional = vendorsService.findById(id);
-        if (!vendorOptional.isPresent()) {
-            String msg = "Vendor doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("vendor", vendorOptional.get());
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
-        }
+        Vendors vendor = vendorsService.findById(id).orElseThrow(()-> new EntityNotFoundException("Vendor doesn't exists By ID Provided."));
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("vendor", vendor);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
     }
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteVendorById(@PathVariable UUID id) {
-        Optional<Vendors> vendorOptional = vendorsService.findById(id);
-        if (!vendorOptional.isPresent()) {
-            String msg = "Vendor doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.VResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            vendorsService.deleteById(id);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        Vendors vendor = vendorsService.findById(id).orElseThrow(()-> new EntityNotFoundException("Vendor doesn't exists By ID Provided."));
+
+        vendorsService.deleteById(id);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {

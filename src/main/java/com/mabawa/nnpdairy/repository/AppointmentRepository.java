@@ -20,6 +20,11 @@ public interface AppointmentRepository extends JpaRepository<Appointments, UUID>
 
     @Transactional
     @Modifying(clearAutomatically = true)
+    @Query("UPDATE Appointments appointments SET appointments.status = :status WHERE appointments.id = :id")
+    void updateAppointmentsById(@Param("status") Integer status, @Param("id") UUID id);
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Appointments appointments WHERE appointments.id = :id")
     void deleteAppointmentsById(@Param("id") UUID id);
 

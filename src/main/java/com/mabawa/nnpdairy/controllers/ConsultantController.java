@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -59,7 +60,8 @@ public class ConsultantController {
                 consultants.setCreated(Timestamp.valueOf(lastLocal));
                 consultants = consultantService.create(consultants);
 
-                List<ConsultantsProfile> consultantsProfileList = new ArrayList<>();
+                String profStr = "";
+                //List<ConsultantsProfile> consultantsProfileList = new ArrayList<>();
 
                 if (image != null && !image.isEmpty()){
                     try{
@@ -68,17 +70,19 @@ public class ConsultantController {
                         consultantsProfile.setTitle(consultants.getName());
                         consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
-                        String profStr = consultantsProfileService.addProfile(consultantsProfile);
+                        String conProfId = consultantsProfileService.addProfile(consultantsProfile);
 
-                        consultantsProfile.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData())));
+                        profStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData()));
+                        consultantsProfile.setImageDownload(profStr);
 
-                        consultantsProfileList.add(consultantsProfile);
+                        //consultantsProfileList.add(consultantsProfile);
                     }catch (IOException ex){
                         System.out.printf("Error : " + ex.toString());
+                        //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
                     }
                 }
 
-                consultants.setConsultantsProfileList(consultantsProfileList);
+                consultants.setImageDownloads(profStr);
 
                 HashMap suppzMap = new HashMap();
                 suppzMap.put("consultant", consultants);
@@ -93,85 +97,82 @@ public class ConsultantController {
     @PutMapping(path = {"edit-consultant/{id}"}, consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> editConsultant(@PathVariable UUID id, @RequestPart("consultant") String consultant, @RequestPart("image") MultipartFile image) {
         Consultants consultants = consultantService.getJson(consultant);
-        Optional<Consultants> optionalConsultants = consultantService.findById(id);
-        if (!optionalConsultants.isPresent()) {
-            String msg = "No Consultant found By ID Provided.";
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            Consultants savedConsultant = optionalConsultants.get();
-            consultants.setId(savedConsultant.getId());
-            consultants.setCreated(savedConsultant.getCreated());
-            consultants = consultantService.update(consultants);
+        Consultants savedConsultant = consultantService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No Consultant found By ID Provided."));
 
-            List<ConsultantsProfile> consultantsProfileList = new ArrayList<>();
+        consultants.setId(savedConsultant.getId());
+        consultants.setCreated(savedConsultant.getCreated());
+        consultants = consultantService.update(consultants);
 
-            if (image != null && !image.isEmpty()){
-                consultantsProfileService.deleteConsultantProfile(savedConsultant.getId().toString());
+        String profStr = "";
+        //List<ConsultantsProfile> consultantsProfileList = new ArrayList<>();
 
-                try{
-                    ConsultantsProfile consultantsProfile = new ConsultantsProfile();
-                    consultantsProfile.setId(consultants.getId().toString());
-                    consultantsProfile.setTitle(consultants.getName());
-                    consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
+        if (image != null && !image.isEmpty()){
+            consultantsProfileService.deleteConsultantProfile(savedConsultant.getId().toString());
 
-                    String profStr = consultantsProfileService.addProfile(consultantsProfile);
+            try{
+                ConsultantsProfile consultantsProfile = new ConsultantsProfile();
+                consultantsProfile.setId(consultants.getId().toString());
+                consultantsProfile.setTitle(consultants.getName());
+                consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
-                    consultantsProfile.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData())));
+                String conProfId = consultantsProfileService.addProfile(consultantsProfile);
 
-                    consultantsProfileList.add(consultantsProfile);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
-                }
-            }else{
-                consultantsProfileList = consultantsProfileService.getConsultantProf(consultants.getId().toString());
+                profStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData()));
+                consultantsProfile.setImageDownload(profStr);
+
+                //consultantsProfileList.add(consultantsProfile);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
-
-            consultants.setConsultantsProfileList(consultantsProfileList);
-
-            HashMap hashMap = new HashMap();
-            hashMap.put("consultant", consultants);
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
+        }else{
+            profStr = consultantsProfileService.getConsultantProfImage(consultants.getId().toString());
         }
+
+        consultants.setImageDownloads(profStr);
+
+        HashMap hashMap = new HashMap();
+        hashMap.put("consultant", consultants);
+        return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
     }
 
     @PutMapping(path = {"edit-consultant-image/{id}"}, consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> editConsultantImage(@PathVariable UUID id, @RequestPart("image") MultipartFile image) {
-        Optional<Consultants> optionalConsultants = consultantService.findById(id);
-        if (!optionalConsultants.isPresent()) {
-            String msg = "No Consultant found By ID Provided.";
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            Consultants savedConsultant = optionalConsultants.get();
+        Consultants savedConsultant = consultantService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No Consultant found By ID Provided."));
 
-            List<ConsultantsProfile> consultantsProfileList = new ArrayList<>();
+        String profStr = "";
+        //List<ConsultantsProfile> consultantsProfileList = new ArrayList<>();
 
-            if (image != null && !image.isEmpty()){
-                consultantsProfileService.deleteConsultantProfile(savedConsultant.getId().toString());
+        if (image != null && !image.isEmpty()){
+            consultantsProfileService.deleteConsultantProfile(savedConsultant.getId().toString());
 
-                try{
-                    ConsultantsProfile consultantsProfile = new ConsultantsProfile();
-                    consultantsProfile.setId(savedConsultant.getId().toString());
-                    consultantsProfile.setTitle(savedConsultant.getName());
-                    consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
+            try{
+                ConsultantsProfile consultantsProfile = new ConsultantsProfile();
+                consultantsProfile.setId(savedConsultant.getId().toString());
+                consultantsProfile.setTitle(savedConsultant.getName());
+                consultantsProfile.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
-                    String profStr = consultantsProfileService.addProfile(consultantsProfile);
+                String conProfId = consultantsProfileService.addProfile(consultantsProfile);
 
-                    consultantsProfile.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData())));
+                profStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(consultantsProfile.getImage().getData()));
+                consultantsProfile.setImageDownload(profStr);
 
-                    consultantsProfileList.add(consultantsProfile);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
-                }
-            }else{
-                consultantsProfileList = consultantsProfileService.getConsultantProf(savedConsultant.getId().toString());
+                //consultantsProfileList.add(consultantsProfile);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
-
-            savedConsultant.setConsultantsProfileList(consultantsProfileList);
-
-            HashMap hashMap = new HashMap();
-            hashMap.put("consultant", savedConsultant);
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
+        }else{
+            profStr = consultantsProfileService.getConsultantProfImage(savedConsultant.getId().toString());
         }
+
+        savedConsultant.setImageDownloads(profStr);
+
+        HashMap hashMap = new HashMap();
+        hashMap.put("consultant", savedConsultant);
+        return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
     }
 
     @GetMapping
@@ -202,30 +203,23 @@ public class ConsultantController {
 
     @GetMapping(path = {"/{id}"})
     public ResponseEntity<Response> getConsultantById(@PathVariable UUID id) {
-        Optional<Consultants> consultantsOptional = consultantService.findById(id);
-        if (!consultantsOptional.isPresent()) {
-            String msg = "Consultant doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            Consultants consultants = consultantsOptional.get();
-            consultants.setImageDownloads(consultantsProfileService.getConsultantProfImage(consultants.getId().toString()));
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("consultant", consultants);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
-        }
+        Consultants consultants = consultantService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Consultant doesn't exists By ID Provided."));
+
+        consultants.setImageDownloads(consultantsProfileService.getConsultantProfImage(consultants.getId().toString()));
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("consultant", consultants);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
     }
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteConsultantById(@PathVariable UUID id) {
-        Optional<Consultants> consultantsOptional = consultantService.findById(id);
-        if (!consultantsOptional.isPresent()) {
-            String msg = "Consultant doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            consultantsProfileService.deleteConsultantProfile(id.toString());
-            consultantService.deleteById(id);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        Consultants consultants = consultantService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Consultant doesn't exists By ID Provided."));
+
+        consultantsProfileService.deleteConsultantProfile(id.toString());
+        consultantService.deleteById(id);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     @PostMapping(path = "new-appointment")
@@ -282,11 +276,8 @@ public class ConsultantController {
             String msg = "Missing Params.";
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
-        Optional<Appointments> optionalAppointments = appointmentService.findById(id);
-        if (!optionalAppointments.isPresent()){
-            String msg = "Appointment not found by ID provided.";
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }
+        Appointments savedAppointment = appointmentService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Appointment not found by ID provided."));
 
         Timestamp eTime = new Timestamp(new Date().getTime());
 
@@ -310,8 +301,6 @@ public class ConsultantController {
             String msg = "Consultant provided already has an Appointment on timimg provided.";
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
-
-        Appointments savedAppointment = optionalAppointments.get();
         appointments.setCreated(savedAppointment.getCreated());
         appointments.setId(savedAppointment.getId());
 
@@ -321,6 +310,18 @@ public class ConsultantController {
         suppzMap.put("appointment", appointments);
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
     }
+
+    @PutMapping(path = "edit-appointment-status/{id}/{status}")
+    public ResponseEntity<Response> editAppointment(@PathVariable UUID id, @PathVariable Integer status){
+        Appointments savedAppointment = appointmentService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Appointment not found by ID provided."));
+
+        appointmentService.updateAppointmentStatus(status, id);
+        HashMap suppzMap = new HashMap();
+
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[8], suppzMap);
+    }
+
 
     @GetMapping(path = "getAllAppointments")
     public ResponseEntity<Response> getAllAppointments() {
@@ -369,14 +370,11 @@ public class ConsultantController {
 
     @DeleteMapping(path = {"/delete-appointment/{id}"})
     public ResponseEntity<Response> deleteAppointmentById(@PathVariable UUID id) {
-        Optional<Appointments> optionalAppointments = appointmentService.findById(id);
-        if (!optionalAppointments.isPresent()) {
-            String msg = "Appointment doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            appointmentService.deleteById(id);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        Appointments appointments = appointmentService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException());
+
+        appointmentService.deleteById(id);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     @DeleteMapping(path = {"/delete-appointment-consultant/{consultant}"})

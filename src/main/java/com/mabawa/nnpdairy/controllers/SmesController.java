@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -28,19 +29,18 @@ public class SmesController {
     @PostMapping
     public ResponseEntity<Response> addNewSme(@RequestBody Smes smes) {
         if (!smes.getName().isEmpty()) {
-            Optional<Smes> smeOptional = smesService.getSmeByName(smes.getName());
-            if (smeOptional.isPresent()) {
+            Optional<Smes> optionalSmes = smesService.getSmeByName(smes.getName());
+            if (optionalSmes.isPresent()){
                 String msg = "An SME already exists By Name Provided.";
                 return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-            } else {
-                LocalDateTime lastLocal = LocalDateTime.now();
-                smes.setCreated(Timestamp.valueOf(lastLocal));
-                smes = smesService.create(smes);
-
-                HashMap suppzMap = new HashMap();
-                suppzMap.put("sme", smes);
-                return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
             }
+            LocalDateTime lastLocal = LocalDateTime.now();
+            smes.setCreated(Timestamp.valueOf(lastLocal));
+            smes = smesService.create(smes);
+
+            HashMap suppzMap = new HashMap();
+            suppzMap.put("sme", smes);
+            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
         } else {
             String msg = "Missing Params.";
             return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
@@ -49,19 +49,16 @@ public class SmesController {
 
     @PutMapping({"edit-sme/{id}"})
     public ResponseEntity<Response> editSme(@PathVariable UUID id, @RequestBody Smes smes) {
-        Optional<Smes> optionalSmes = smesService.findById(smes.getId());
-        if (!optionalSmes.isPresent()) {
-            String msg = "No SME found By ID Provided.";
-            return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            Smes savedSme = optionalSmes.get();
-            smes.setId(savedSme.getId());
-            smes = smesService.update(smes);
+        Smes savedSme = smesService.findById(smes.getId())
+                .orElseThrow(()-> new EntityNotFoundException("No SME found By ID Provided."));
 
-            HashMap hashMap = new HashMap();
-            hashMap.put("sme", smes);
-            return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
-        }
+        smes.setId(savedSme.getId());
+        smes.setCreated(savedSme.getCreated());
+        smes = smesService.update(smes);
+
+        HashMap hashMap = new HashMap();
+        hashMap.put("sme", smes);
+        return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
     }
 
     @GetMapping
@@ -75,27 +72,20 @@ public class SmesController {
 
     @GetMapping(path = {"/{id}"})
     public ResponseEntity<Response> getSmeById(@PathVariable UUID id) {
-        Optional<Smes> smeOptional = smesService.findById(id);
-        if (!smeOptional.isPresent()) {
-            String msg = "SME doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            HashMap suppzMap = new HashMap();
-            suppzMap.put("sme", smeOptional.get());
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], suppzMap);
-        }
+        Smes sme = smesService.findById(id).orElseThrow(()-> new EntityNotFoundException("SME doesn't exists By ID Provided."));
+
+        HashMap suppzMap = new HashMap();
+        suppzMap.put("sme", sme);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], suppzMap);
     }
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteSmeById(@PathVariable UUID id) {
-        Optional<Smes> smesOptional = smesService.findById(id);
-        if (!smesOptional.isPresent()) {
-            String msg = "SME doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.SResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            smesService.deleteById(id);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        Smes smes = smesService.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("SME doesn't exists By ID Provided."));
+
+        smesService.deleteById(id);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {

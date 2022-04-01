@@ -57,6 +57,10 @@ public class AppointmentService {
         return  appointmentRepository.save(appointments);
     }
 
+    public void updateAppointmentStatus(Integer status, UUID id){
+        appointmentRepository.updateAppointmentsById(status, id);
+    }
+
     public void deleteById(UUID id){
         appointmentRepository.deleteAppointmentsById(id);
     }

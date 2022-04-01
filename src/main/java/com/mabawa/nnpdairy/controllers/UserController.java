@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -53,6 +54,9 @@ public class UserController {
     @Autowired
     private SendSMSService sendSMSService;
 
+    @Autowired
+    private SendEmailService sendEmailService;
+
     String title = Constants.TITLES[0];
 
     @PostMapping
@@ -60,60 +64,49 @@ public class UserController {
         String status;
         String msg;
         if (!user.getName().isEmpty() && !user.getPassword().isEmpty()){
-            Optional<User> nmeOptional = userService.getUserByName(user.getName());
-            if (nmeOptional.isPresent()){
-                status = Constants.STATUS[2];
-                msg = "User with name provided already exists.";
-                return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+            Optional<User>  optionalNme = userService.getUserByName(user.getName());
+            if (optionalNme.isPresent()){
+                msg = "A Vendor already exists By Name Provided.";
+                return new ResponseEntity<Response>(this.UserResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
             }
-
-            Optional<User> foneOptional = userService.getUserByPhone(user.getPhone());
-            if (foneOptional.isPresent()){
-                status = Constants.STATUS[2];
+            Optional<User> optionalFone = userService.getUserByPhone(user.getPhone());
+            if (optionalFone.isPresent()){
                 msg = "User with Phone No. provided already exists.";
-                return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<Response>(this.UserResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
             }
-
             if (!user.getMail().isEmpty()){
-                Optional<User> mailOptional = userService.getUserByMail(user.getMail());
-                if (mailOptional.isPresent()){
-                    status = Constants.STATUS[2];
+                Optional<User> optionalMail = userService.getUserByMail(user.getMail());
+                if (optionalMail.isPresent()){
                     msg = "User with Email provided already exists.";
-                    return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<Response>(this.UserResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
                 }
             }
 
-            Optional<Role> roleOptional = roleService.get(user.getRole());
-            if (!roleOptional.isPresent())
-            {
-                status = Constants.STATUS[2];
-                msg = "That role Id does not exist";
-                return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-            }else{
-                String psw = this.passwordEncryption.encrypt(user.getPassword());
-                LocalDateTime lastLocal = LocalDateTime.now();
-                user.setPassword(psw);
-                user.setCreated(Timestamp.valueOf(lastLocal));
-                user.setVerified(true);
-                User savedUser = userService.create(user);
+            Role role = roleService.get(user.getRole())
+                    .orElseThrow(()-> new EntityNotFoundException("That role Id does not exist"));
+            String psw = this.passwordEncryption.encrypt(user.getPassword());
+            LocalDateTime lastLocal = LocalDateTime.now();
+            user.setPassword(psw);
+            user.setCreated(Timestamp.valueOf(lastLocal));
+            user.setVerified(true);
+            User savedUser = userService.create(user);
 
-                if (configService.get().getAgepsw() == 1){
-                    Psws psws = new Psws();
-                    psws.setUserid(savedUser.getId());
-                    psws.setLastdate(Timestamp.valueOf(lastLocal));
-                    psws.setPsw1(psw);
-                    psws.setPsw2("");
-                    psws.setPsw3("");
-                    psws.setPsw4("");
-                    psws.setPsw5("");
-                    psws.setLastpsw(1);
-                    Psws savedPsws = pswsService.create(psws);
-                }
-
-                HashMap hashMap = new HashMap();
-                hashMap.put("user", savedUser);
-                return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
+            if (configService.get().getAgepsw() == 1){
+                Psws psws = new Psws();
+                psws.setUserid(savedUser.getId());
+                psws.setLastdate(Timestamp.valueOf(lastLocal));
+                psws.setPsw1(psw);
+                psws.setPsw2("");
+                psws.setPsw3("");
+                psws.setPsw4("");
+                psws.setPsw5("");
+                psws.setLastpsw(1);
+                Psws savedPsws = pswsService.create(psws);
             }
+
+            HashMap hashMap = new HashMap();
+            hashMap.put("user", savedUser);
+            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
         }else{
             status = Constants.STATUS[2];
             msg = "Missing params";
@@ -139,64 +132,56 @@ public class UserController {
                 return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
             }
 
-            Optional<User> foneOptional = userService.getUserByPhone(user.getPhone());
-            if (foneOptional.isPresent()){
-                status = Constants.STATUS[2];
+            Optional<User> optionalFone = userService.getUserByPhone(user.getPhone());
+            if (optionalFone.isPresent()){
                 msg = "User with Phone No. provided already exists.";
-                return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<Response>(this.UserResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
             }
 
             if (!user.getMail().isEmpty()){
-                Optional<User> mailOptional = userService.getUserByMail(user.getMail());
-                if (mailOptional.isPresent()){
-                    status = Constants.STATUS[2];
+                Optional<User> optionalMail = userService.getUserByMail(user.getMail());
+                if (optionalMail.isPresent()){
                     msg = "User with Email provided already exists.";
-                    return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<Response>(this.UserResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
                 }
             }
 
             user.setRole(UUID.fromString("d25daf55-89d6-4e19-ba8b-824a988940c6"));
 
-            Optional<Role> roleOptional = roleService.get(user.getRole());
-            if (!roleOptional.isPresent())
-            {
-                status = Constants.STATUS[2];
-                msg = "That role Id does not exist";
-                return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-            }else{
-                String psw = this.passwordEncryption.encrypt(user.getPassword());
-                LocalDateTime lastLocal = LocalDateTime.now();
-                user.setPassword(psw);
-                user.setCreated(Timestamp.valueOf(lastLocal));
-                user.setVerified(false);
+            Role role = roleService.get(user.getRole())
+                    .orElseThrow(()-> new EntityNotFoundException("That role Id does not exist"));
+            String psw = this.passwordEncryption.encrypt(user.getPassword());
+            LocalDateTime lastLocal = LocalDateTime.now();
+            user.setPassword(psw);
+            user.setCreated(Timestamp.valueOf(lastLocal));
+            user.setVerified(false);
 
-                Psws psws = new Psws();
+            Psws psws = new Psws();
 
-                OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(180, TimeUnit.SECONDS)
-                        .readTimeout(180, TimeUnit.SECONDS)
-                        .build();
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(180, TimeUnit.SECONDS)
+                    .readTimeout(180, TimeUnit.SECONDS)
+                    .build();
 
-                User savedUser = sendSMSSema(user, client);
+            User savedUser = sendSMSSema(user, client);
 
-                if (configService.get().getAgepsw() == 1){
-                    psws.setUserid(savedUser.getId());
-                    psws.setLastdate(Timestamp.valueOf(lastLocal));
-                    psws.setPsw1(user.getPassword());
-                    psws.setPsw2("");
-                    psws.setPsw3("");
-                    psws.setPsw4("");
-                    psws.setPsw5("");
-                    psws.setLastpsw(1);
-                    Psws savedPsws = pswsService.create(psws);
-                }
-
-                user.setPassword(null);
-
-                HashMap hashMap = new HashMap();
-                hashMap.put("user", savedUser);
-                return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
+            if (configService.get().getAgepsw() == 1){
+                psws.setUserid(savedUser.getId());
+                psws.setLastdate(Timestamp.valueOf(lastLocal));
+                psws.setPsw1(user.getPassword());
+                psws.setPsw2("");
+                psws.setPsw3("");
+                psws.setPsw4("");
+                psws.setPsw5("");
+                psws.setLastpsw(1);
+                Psws savedPsws = pswsService.create(psws);
             }
+
+            user.setPassword(null);
+
+            HashMap hashMap = new HashMap();
+            hashMap.put("user", savedUser);
+            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[0], hashMap), HttpStatus.OK);
         }else{
             status = Constants.STATUS[2];
             msg = "Missing params";
@@ -215,14 +200,9 @@ public class UserController {
             return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> userOptional = userService.verifyOtp(user.getPhone(), user.getOtpNumber());
-        if (!userOptional.isPresent()){
-            status = Constants.STATUS[2];
-            msg = "Invalid Phone No. or OTP.";
-            return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }
+        User user1 = userService.verifyOtp(user.getPhone(), user.getOtpNumber())
+                .orElseThrow(()-> new EntityNotFoundException("Invalid Phone No. or OTP."));
 
-        User user1 = userOptional.get();
         if (user1.isVerified()) {
             status = Constants.STATUS[2];
             msg = "User already verified.";
@@ -344,32 +324,22 @@ public class UserController {
 
     @GetMapping(path = {"/searchById/{id}"})
     public ResponseEntity<Response> getUserzByID(@PathVariable UUID id) {
-        Optional<User> userOptional = userService.getUserById(id);
-        if (userOptional.isPresent()){
-            User user = userOptional.get();
+        User user = userService.getUserById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No System User exists By ID Provided."));
 
-            HashMap hashMap = new HashMap();
-            hashMap.put("userList", user);
-            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 0, Constants.MESSAGES[3], hashMap), HttpStatus.OK);
-        }else{
-            String msg = "No System User exists By ID Provided.";
-            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }
+        HashMap hashMap = new HashMap();
+        hashMap.put("userList", user);
+        return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 0, Constants.MESSAGES[3], hashMap), HttpStatus.OK);
     }
 
     @GetMapping(path = {"/searchByName/{name}"})
     public ResponseEntity<Response> getUserzByName(@PathVariable String name) {
-        Optional<User> userOptional = userService.getUserByName(name);
-        if (userOptional.isPresent()){
-            User user = userOptional.get();
+        User user = userService.getUserByName(name)
+                .orElseThrow(()-> new EntityNotFoundException("No System User exists By Name Provided."));
 
-            HashMap hashMap = new HashMap();
-            hashMap.put("userList", user);
-            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 0, Constants.MESSAGES[3], hashMap), HttpStatus.OK);
-        }else{
-            String msg = "No System User exists By Name Provided.";
-            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }
+        HashMap hashMap = new HashMap();
+        hashMap.put("userList", user);
+        return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 0, Constants.MESSAGES[3], hashMap), HttpStatus.OK);
     }
 
     @GetMapping({"/user-roles"})
@@ -392,87 +362,78 @@ public class UserController {
 
     @PutMapping({"/{userId}/edit-user-details"})
     public ResponseEntity<Response> editUserDetails(@PathVariable UUID userId, @RequestBody User user) {
-        Optional<User> optionalUser =userService.getUserById(userId);
+        User savedUser =userService.getUserById(userId)
+                .orElseThrow(()-> new EntityNotFoundException("A User with that ID does not exist."));
         String status;
         String msg;
-        if (optionalUser.isPresent()){
-            if (!user.getPassword().isEmpty() && user.getPassword().trim().length() >= 6){
-                String encPsw;
-                if (!user.getRole().toString().isEmpty()) {
-                    Optional<Role> optionalRole = roleService.get(user.getRole());
-                    if (!optionalRole.isPresent()) {
-                        encPsw = Constants.STATUS[2];
-                        msg = "That role Id does not exist";
-                        return new ResponseEntity<Response>(this.UserResponse(this.title, encPsw, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-                    }
-                }
 
-                String psw = user.getPassword();
-                encPsw = this.passwordEncryption.encrypt(psw);
-                user.setPassword(encPsw);
-                LocalDateTime lastLocal = LocalDateTime.now();
-                int succss = 0;
-                if (configService.get().getAgepsw() == 1) {
-                    Psws psws = pswsService.getUserPasswords(userId, encPsw);
-                    int lpsws = psws.getLastpsw();
-                    if (lpsws == 0) {
-                        psws.setLastpsw(1);
-                        pswsService.create(psws);
-                        status = Constants.STATUS[0];
-                        msg = Constants.MESSAGES[0];
-                        succss = 1;
-                    } else {
-                        String psw1 = psws.getPsw1();
-                        String psw2 = psws.getPsw2();
-                        String psw3 = psws.getPsw3();
-                        String psw4 = psws.getPsw4();
-                        String psw5 = psws.getPsw5();
-                        String[] xstsPsw = new String[]{psw1, psw2, psw3, psw4, psw5};
-                        Stream var10000 = Arrays.stream(xstsPsw);
-                        Objects.requireNonNull(encPsw);
-                        boolean exists = var10000.anyMatch(encPsw::equals);
-                        if (exists) {
-                            status = Constants.STATUS[2];
-                            msg = "Can't Re-use a Password already used.";
-                            succss = 0;
-                        } else {
-                            if (lpsws == 1) {
-                                psw2 = encPsw;
-                            } else if (lpsws == 2) {
-                                psw3 = encPsw;
-                            } else if (lpsws == 3) {
-                                psw4 = encPsw;
-                            } else if (lpsws == 4) {
-                                psw5 = encPsw;
-                            } else if (lpsws == 5) {
-                                psw1 = encPsw;
-                            }
-
-                            pswsService.updatePsws(Timestamp.valueOf(lastLocal), psw1, psw2, psw3, psw4, psw5, userId);
-
-                            succss = 1;
-                        }
-                    }
-                }else{
-                    succss = 1;
-                }
-
-                User savedUser = optionalUser.get();
-                user.setId(savedUser.getId());
-                status = Constants.STATUS[0];
-                msg = Constants.MESSAGES[0];
-                savedUser = userService.update(user);
-                HashMap hashMap = new HashMap();
-                hashMap.put("user", savedUser);
-                return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, Integer.valueOf(succss), msg, hashMap), HttpStatus.OK);
-            }else{
-                status = Constants.STATUS[2];
-                msg = "Password Invalid or Blank";
-                return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        if (!user.getPassword().isEmpty() && user.getPassword().trim().length() >= 6){
+            String encPsw;
+            if (!user.getRole().toString().isEmpty()) {
+                Role role = roleService.get(user.getRole())
+                        .orElseThrow(()-> new EntityNotFoundException("That role Id does not exist"));
             }
+
+            String psw = user.getPassword();
+            encPsw = this.passwordEncryption.encrypt(psw);
+            user.setPassword(encPsw);
+            LocalDateTime lastLocal = LocalDateTime.now();
+            int succss = 0;
+            if (configService.get().getAgepsw() == 1) {
+                Psws psws = pswsService.getUserPasswords(userId, encPsw);
+                int lpsws = psws.getLastpsw();
+                if (lpsws == 0) {
+                    psws.setLastpsw(1);
+                    pswsService.create(psws);
+                    status = Constants.STATUS[0];
+                    msg = Constants.MESSAGES[0];
+                    succss = 1;
+                } else {
+                    String psw1 = psws.getPsw1();
+                    String psw2 = psws.getPsw2();
+                    String psw3 = psws.getPsw3();
+                    String psw4 = psws.getPsw4();
+                    String psw5 = psws.getPsw5();
+                    String[] xstsPsw = new String[]{psw1, psw2, psw3, psw4, psw5};
+                    Stream var10000 = Arrays.stream(xstsPsw);
+                    Objects.requireNonNull(encPsw);
+                    boolean exists = var10000.anyMatch(encPsw::equals);
+                    if (exists) {
+                        status = Constants.STATUS[2];
+                        msg = "Can't Re-use a Password already used.";
+                        succss = 0;
+                    } else {
+                        if (lpsws == 1) {
+                            psw2 = encPsw;
+                        } else if (lpsws == 2) {
+                            psw3 = encPsw;
+                        } else if (lpsws == 3) {
+                            psw4 = encPsw;
+                        } else if (lpsws == 4) {
+                            psw5 = encPsw;
+                        } else if (lpsws == 5) {
+                            psw1 = encPsw;
+                        }
+
+                        pswsService.updatePsws(Timestamp.valueOf(lastLocal), psw1, psw2, psw3, psw4, psw5, userId);
+
+                        succss = 1;
+                    }
+                }
+            }else{
+                succss = 1;
+            }
+
+            user.setId(savedUser.getId());
+            status = Constants.STATUS[0];
+            msg = Constants.MESSAGES[0];
+            savedUser = userService.update(user);
+            HashMap hashMap = new HashMap();
+            hashMap.put("user", savedUser);
+            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, Integer.valueOf(succss), msg, hashMap), HttpStatus.OK);
         }else{
             status = Constants.STATUS[2];
-            msg = "A User with that ID does not exist.";
+            msg = "Password Invalid or Blank";
             return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
     }
@@ -575,14 +536,10 @@ public class UserController {
             return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> userOptional = userService.getUserByPhone(user.getPhone());
-        if (!userOptional.isPresent()){
-            status = Constants.STATUS[2];
-            msg = "No such User By Phone No. Provided.";
-            return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }
+        User foneUser = userService.getUserByPhone(user.getPhone())
+                .orElseThrow(()-> new EntityNotFoundException("No such User By Phone No. Provided."));
 
-        user = userOptional.get();
+        user = foneUser;
         if (user.isVerified()) {
             status = Constants.STATUS[2];
             msg = "User already verified.";
@@ -658,83 +615,76 @@ public class UserController {
 
     @PutMapping(path = {"/updatepassword"})
     public ResponseEntity<Response> updatePassword(@RequestBody User userz) {
-        Optional<User> userOptional = userService.getUserById(userz.getId());
-        if (userOptional.isPresent()){
-            UUID userId = userz.getId();
-            String psw = userz.getPassword();
-            String msg = "";
-            String status = "";
-            int succss = 0;
-            if (psw.length() < 6) {
-                msg = "Password Invalid or Blank.";
-                return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-            }
+        User userOptional = userService.getUserById(userz.getId())
+                .orElseThrow(()-> new EntityNotFoundException("No such User By Id Provided."));
 
-            String encPsw = this.passwordEncryption.encrypt(psw);
-            if (configService.get().getAgepsw() == 1) {
-                LocalDateTime lastLocal = LocalDateTime.now();
-                Psws psws = pswsService.getUserPasswords(userId, encPsw);
-                int lpsws = psws.getLastpsw();
-                if (lpsws == 0) {
-                    psws.setLastpsw(1);
-                    pswsService.create(psws);
-                    status = Constants.STATUS[0];
-                    msg = Constants.MESSAGES[0];
-                    succss = 1;
-                } else {
-                    String psw1 = psws.getPsw1();
-                    String psw2 = psws.getPsw2();
-                    String psw3 = psws.getPsw3();
-                    String psw4 = psws.getPsw4();
-                    String psw5 = psws.getPsw5();
-                    String[] xstsPsw = new String[]{psw1, psw2, psw3, psw4, psw5};
-                    Stream var10000 = Arrays.stream(xstsPsw);
-                    Objects.requireNonNull(encPsw);
-                    boolean exists = var10000.anyMatch(encPsw::equals);
-                    if (exists) {
-                        status = Constants.STATUS[2];
-                        msg = "Can't Re-use a Password already used.";
-                        succss = 0;
-                    } else {
-                        if (lpsws == 1) {
-                            psw2 = encPsw;
-                        } else if (lpsws == 2) {
-                            psw3 = encPsw;
-                        } else if (lpsws == 3) {
-                            psw4 = encPsw;
-                        } else if (lpsws == 4) {
-                            psw5 = encPsw;
-                        } else if (lpsws == 5) {
-                            psw1 = encPsw;
-                        }
-
-                        pswsService.updatePsws(Timestamp.valueOf(lastLocal), psw1, psw2, psw3, psw4, psw5, userId);
-
-                        succss = 1;
-                    }
-                }
-            }else{
-                succss = 1;
-            }
-
-            userService.updateUserPassword(userz.getPassword(), userz.getId());
-            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, Integer.valueOf(succss), msg, new HashMap()), HttpStatus.OK);
-        }else{
-            String msg = "No such User By Id Provided.";
+        UUID userId = userz.getId();
+        String psw = userz.getPassword();
+        String msg = "";
+        String status = "";
+        int succss = 0;
+        if (psw.length() < 6) {
+            msg = "Password Invalid or Blank.";
             return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
+
+        String encPsw = this.passwordEncryption.encrypt(psw);
+        if (configService.get().getAgepsw() == 1) {
+            LocalDateTime lastLocal = LocalDateTime.now();
+            Psws psws = pswsService.getUserPasswords(userId, encPsw);
+            int lpsws = psws.getLastpsw();
+            if (lpsws == 0) {
+                psws.setLastpsw(1);
+                pswsService.create(psws);
+                status = Constants.STATUS[0];
+                msg = Constants.MESSAGES[0];
+                succss = 1;
+            } else {
+                String psw1 = psws.getPsw1();
+                String psw2 = psws.getPsw2();
+                String psw3 = psws.getPsw3();
+                String psw4 = psws.getPsw4();
+                String psw5 = psws.getPsw5();
+                String[] xstsPsw = new String[]{psw1, psw2, psw3, psw4, psw5};
+                Stream var10000 = Arrays.stream(xstsPsw);
+                Objects.requireNonNull(encPsw);
+                boolean exists = var10000.anyMatch(encPsw::equals);
+                if (exists) {
+                    status = Constants.STATUS[2];
+                    msg = "Can't Re-use a Password already used.";
+                    succss = 0;
+                } else {
+                    if (lpsws == 1) {
+                        psw2 = encPsw;
+                    } else if (lpsws == 2) {
+                        psw3 = encPsw;
+                    } else if (lpsws == 3) {
+                        psw4 = encPsw;
+                    } else if (lpsws == 4) {
+                        psw5 = encPsw;
+                    } else if (lpsws == 5) {
+                        psw1 = encPsw;
+                    }
+
+                    pswsService.updatePsws(Timestamp.valueOf(lastLocal), psw1, psw2, psw3, psw4, psw5, userId);
+
+                    succss = 1;
+                }
+            }
+        }else{
+            succss = 1;
+        }
+
+        userService.updateUserPassword(userz.getPassword(), userz.getId());
+        return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, Integer.valueOf(succss), msg, new HashMap()), HttpStatus.OK);
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity resetPassword(@RequestBody User user){
         String msg = "";
         String status = "";
-        Optional<User> userOptional = userService.getUserByPhone(user.getPhone());
-        if (!userOptional.isPresent()){
-            status = Constants.STATUS[2];
-            msg = "No such User By Phone No. Provided.";
-            return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }
+        User savedUser = userService.getUserByPhone(user.getPhone())
+                .orElseThrow(()-> new EntityNotFoundException("No such User By Phone No. Provided."));
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(180, TimeUnit.SECONDS)
@@ -749,7 +699,6 @@ public class UserController {
             return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
 
-
         msg = "Password sent to the user.";
         status = Constants.STATUS[0];
         return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, 0, msg, new HashMap()), HttpStatus.OK);
@@ -757,30 +706,38 @@ public class UserController {
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteUserzByID(@PathVariable UUID id) {
-        Optional<User> userOptional = userService.getUserById(id);
-        if (!userOptional.isPresent()){
-            String msg = "No System User exists By ID Provided.";
+        User userz = userService.getUserById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No System User exists By ID Provided."));
+
+        if (userz.getAdmin() == 99) {
+            String msg = "User cannot be deleted.";
             return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            User userz = (User)userOptional.get();
-            if (userz.getAdmin() == 99) {
-                String msg = "User cannot be deleted.";
-                return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-            }
-
-//            LocalDateTime lastLocal = LocalDateTime.now();
-//            lastLocal = lastLocal.minus(30L, ChronoUnit.DAYS);
-//            List<Transsumm> transsummList = this.transsummRepository.getTransByUserwiththirtydays(id, Timestamp.valueOf(lastLocal));
-//            if (transsummList.size() > 0) {
-//                String msg = "User cannot be deleted because of other references.";
-//                return new ResponseEntity<Response>(this.callResponse(Constants.TITLES[0], Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-//            }
-
-            pswsService.deleteByUserId(id);
-            userService.deleteUserById(id);
-            return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 0, Constants.MESSAGES[4], new HashMap()), HttpStatus.OK);
         }
+
+        pswsService.deleteByUserId(id);
+        userService.deleteUserById(id);
+        return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], Constants.STATUS[0], 0, Constants.MESSAGES[4], new HashMap()), HttpStatus.OK);
     }
+
+    @PostMapping(path = {"/contact-us"})
+    public ResponseEntity<Response> sendContactusEmail(@RequestBody ContactUs contactUs)
+    {
+        String msg = "";
+        String status = "";
+        if (contactUs.getEmail().isEmpty() || contactUs.getName().isEmpty() || contactUs.getMessage().isEmpty())
+        {
+            status = Constants.STATUS[2];
+            msg = "Missing params";
+            return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+
+        sendEmailService.sendSimpleMessage(contactUs);
+
+        status = Constants.STATUS[0];
+        msg = "Sending Email";
+        return new ResponseEntity<Response>(this.UserResponse(this.title, status, 0, msg, new HashMap()), HttpStatus.OK);
+    }
+
 
     private Response UserResponse(String title, String status, Integer success, String msg, HashMap map) {
         Response response = new Response();

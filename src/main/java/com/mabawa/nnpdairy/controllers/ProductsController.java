@@ -4,9 +4,11 @@ import com.mabawa.nnpdairy.constants.Constants;
 import com.mabawa.nnpdairy.models.Products;
 import com.mabawa.nnpdairy.models.Response;
 import com.mabawa.nnpdairy.models.mongo.PImages;
+import com.mabawa.nnpdairy.models.mongo.StockUpload;
 import com.mabawa.nnpdairy.services.ImageService;
 import com.mabawa.nnpdairy.services.ProductsService;
 import com.mabawa.nnpdairy.services.mongo.PImagesService;
+import com.mabawa.nnpdairy.services.mongo.UploadService;
 import org.bson.BsonBinarySubType;
 import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -35,131 +38,132 @@ public class ProductsController {
     @Autowired
     private ImageService imageService;
 
+    @Autowired
+    private UploadService uploadService;
+
     String title = Constants.TITLES[0];
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> addNewProduct(@RequestPart("product") String product, @RequestPart("image") MultipartFile image) {
         Products products = productsService.getJson(product);
         String msg = "";
-        Optional<Products> productsOptional = productsService.getProductByName(products.getName());
-        if (productsOptional.isPresent()){
-            msg = "A Product exists By Name Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            LocalDateTime lastLocal = LocalDateTime.now();
-            products.setCreated(Timestamp.valueOf(lastLocal));
-
-            products = productsService.create(products);
-
-            List<PImages> pImagesList = new ArrayList<>();
-            if (image != null && !image.isEmpty()){
-                try{
-                    PImages pImages = new PImages();
-                    pImages.setId(products.getId().toString());
-                    pImages.setpName(products.getName());
-                    pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
-
-                    String profStr = pImagesService.addPImage(pImages);
-                    pImages.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData())));
-
-                    pImagesList.add(pImages);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
-                }
-            }
-
-            products.setpImages(pImagesList);
-
-
-            HashMap stockMap = new HashMap();
-            stockMap.put("product", products);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], stockMap);
+        Optional<Products> optionalProducts = productsService.getProductByName(products.getName());
+        if (optionalProducts.isPresent())
+        {
+            msg = "A Category already exists By Name Provided.";
+            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[1], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
         }
+        LocalDateTime lastLocal = LocalDateTime.now();
+        products.setCreated(Timestamp.valueOf(lastLocal));
+
+        products = productsService.create(products);
+
+        String profStr = "";
+        //List<PImages> pImagesList = new ArrayList<>();
+        if (image != null && !image.isEmpty()){
+            try{
+                PImages pImages = new PImages();
+                pImages.setId(products.getId().toString());
+                pImages.setpName(products.getName());
+                pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
+
+                String prodImgId = pImagesService.addPImage(pImages);
+
+                profStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData()));
+                pImages.setImageDownload(profStr);
+
+                //pImagesList.add(pImages);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
+            }
+        }
+
+        products.setpImage(profStr);
+
+
+        HashMap stockMap = new HashMap();
+        stockMap.put("product", products);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], stockMap);
     }
 
     @PutMapping(path = {"edit-product/{id}"}, consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> editProduct(@PathVariable UUID id, @RequestPart("product") String product, @RequestPart("image") MultipartFile image) {
         Products products = productsService.getJson(product);
         String msg = "";
-        Optional<Products> productsOptional = productsService.getProductById(products.getId());
-        if (!productsOptional.isPresent()){
-            msg = "A Product doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            Products savedProd = productsOptional.get();
-            products.setId(savedProd.getId());
+        Products savedProd = productsService.getProductById(products.getId())
+                .orElseThrow(()-> new EntityNotFoundException("A Product doesn't exists By ID Provided."));
 
-            products = productsService.update(products);
+        products.setId(savedProd.getId());
 
-            List<PImages> pImagesList = new ArrayList<>();
+        products = productsService.update(products);
 
-            if (image != null && !image.isEmpty()){
-                try{
-                    pImagesService.deleteProductImage(products.getId().toString());
+        //List<PImages> pImagesList = new ArrayList<>();
+        String profStr = "";
+        if (image != null && !image.isEmpty()){
+            try{
+                pImagesService.deleteProductImage(products.getId().toString());
 
-                    PImages pImages = new PImages();
-                    pImages.setId(products.getId().toString());
-                    pImages.setpName(products.getName());
-                    pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
+                PImages pImages = new PImages();
+                pImages.setId(products.getId().toString());
+                pImages.setpName(products.getName());
+                pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
-                    String profStr = pImagesService.addPImage(pImages);
+                String prodImgStr = pImagesService.addPImage(pImages);
+                profStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData()));
+                pImages.setImageDownload(profStr);
 
-                    pImages.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData())));
-
-                    pImagesList.add(pImages);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
-                }
-            }else{
-                pImagesList = pImagesService.getProductImageList(products.getId().toString());
+                //pImagesList.add(pImages);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
-
-            products.setpImages(pImagesList);
-
-            HashMap stockMap = new HashMap();
-            stockMap.put("product", products);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], stockMap);
+        }else{
+            profStr = pImagesService.getProductImage(products.getId().toString());
         }
+
+        products.setpImage(profStr);
+
+        HashMap stockMap = new HashMap();
+        stockMap.put("product", products);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], stockMap);
     }
 
     @PutMapping(path = {"edit-product-image/{id}"}, consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Response> editProductImage(@PathVariable UUID id, @RequestPart("image") MultipartFile image) {
         String msg = "";
-        Optional<Products> productsOptional = productsService.getProductById(id);
-        if (!productsOptional.isPresent()){
-            msg = "A Product doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            Products savedProd = productsOptional.get();
-            List<PImages> pImagesList = new ArrayList<>();
+        Products savedProd = productsService.getProductById(id)
+                .orElseThrow(()-> new EntityNotFoundException("A Product doesn't exists By ID Provided."));
 
-            if (image != null && !image.isEmpty()){
-                try{
-                    pImagesService.deleteProductImage(id.toString());
+        //List<PImages> pImagesList = new ArrayList<>();
+        String profStr = "";
+        if (image != null && !image.isEmpty()){
+            try{
+                pImagesService.deleteProductImage(id.toString());
 
-                    PImages pImages = new PImages();
-                    pImages.setId(savedProd.getId().toString());
-                    pImages.setpName(savedProd.getName());
-                    pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
+                PImages pImages = new PImages();
+                pImages.setId(savedProd.getId().toString());
+                pImages.setpName(savedProd.getName());
+                pImages.setImage(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(image.getBytes())));
 
-                    String profStr = pImagesService.addPImage(pImages);
+                String prodImgStr = pImagesService.addPImage(pImages);
+                profStr = Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData()));
+                pImages.setImageDownload(profStr);
 
-                    pImages.setImageDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(pImages.getImage().getData())));
-
-                    pImagesList.add(pImages);
-                }catch (IOException ex){
-                    System.out.printf("Error : " + ex.toString());
-                }
-            }else{
-                pImagesList = pImagesService.getProductImageList(savedProd.getId().toString());
+                //pImagesList.add(pImages);
+            }catch (IOException ex){
+                System.out.printf("Error : " + ex.toString());
+                //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
-
-            savedProd.setpImages(pImagesList);
-
-            HashMap stockMap = new HashMap();
-            stockMap.put("product", savedProd);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], stockMap);
+        }else{
+            profStr = pImagesService.getProductImage(savedProd.getId().toString());
         }
+
+        savedProd.setpImage(profStr);
+
+        HashMap stockMap = new HashMap();
+        stockMap.put("product", savedProd);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[0], stockMap);
     }
 
     @GetMapping
@@ -183,37 +187,27 @@ public class ProductsController {
     @GetMapping(path = {"searchById/{id}"})
     public ResponseEntity<Response> getProductById(@PathVariable UUID id){
         String msg = "";
-        Optional<Products> productsOptional = productsService.getProductById(id);
-        if (!productsOptional.isPresent()){
-            msg = "A Product doesn't exists By ID Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            Products products = productsOptional.get();
-//            List<PImages> pImagesList = pImagesService.getProductImageList(products.getId().toString());
-//            products.setpImages(pImagesList);
-            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
+        Products products = productsService.getProductById(id)
+                .orElseThrow(()-> new EntityNotFoundException("A Product doesn't exists By ID Provided."));
 
-            HashMap stockMap = new HashMap();
-            stockMap.put("product", products);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
-        }
+        products.setpImage(pImagesService.getProductImage(products.getId().toString()));
+
+        HashMap stockMap = new HashMap();
+        stockMap.put("product", products);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
     }
 
     @GetMapping(path = {"searchByName/{name}"})
     public ResponseEntity<Response> getProductByName(@PathVariable String name){
         String msg = "";
-        Optional<Products> productsOptional = productsService.getProductByName(name);
-        if (!productsOptional.isPresent()){
-            msg = "A Product doesn't exists By Name Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        }else{
-            Products products = productsOptional.get();
-            products.setpImage(pImagesService.getProductImage(products.getId().toString()));
+        Products products = productsService.getProductByName(name)
+                .orElseThrow(()-> new EntityNotFoundException("A Product doesn't exists By Name Provided."));
 
-            HashMap stockMap = new HashMap();
-            stockMap.put("product", products);
-            return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
-        }
+        products.setpImage(pImagesService.getProductImage(products.getId().toString()));
+
+        HashMap stockMap = new HashMap();
+        stockMap.put("product", products);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
     }
 
     @GetMapping(path = {"filter/{name}"})
@@ -284,15 +278,12 @@ public class ProductsController {
 
     @DeleteMapping(path = {"/delete/{id}"})
     public ResponseEntity<Response> deleteProductById(@PathVariable UUID id) {
-        Optional<Products> OptionalProduct = productsService.getProductById(id);
-        if (!OptionalProduct.isPresent()) {
-            String msg = "No Stock Item exists By Stock ID Provided.";
-            return new ResponseEntity<Response>(this.PResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
-        } else {
-            pImagesService.deleteProductImage(id.toString());
-            productsService.deleteProductById(id);
-            return this.getResponseEntity(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
-        }
+        Products product = productsService.getProductById(id)
+                .orElseThrow(()-> new EntityNotFoundException("No Stock Item exists By Stock ID Provided."));
+
+        pImagesService.deleteProductImage(id.toString());
+        productsService.deleteProductById(id);
+        return this.getResponseEntity(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
     @DeleteMapping(path = {"/deletePImage/{id}"})
@@ -311,6 +302,18 @@ public class ProductsController {
     public ResponseEntity<Response> deleteAllProducts() {
         productsService.deleteAllProducts();
         return this.getResponseEntity(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
+    @PostMapping(path = {"/test-c-sharp"})
+    public ResponseEntity<Response> testcSharp(@RequestBody String stockUploads)
+    {
+        List<StockUpload> stockUploadList = productsService.getStockUploadList(stockUploads);
+        stockUploadList.forEach(stockUpload -> {
+            uploadService.create(stockUpload);
+        });
+        HashMap stockMap = new HashMap();
+        stockMap.put("count", stockUploadList.size());
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[3], stockMap);
     }
 
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {
