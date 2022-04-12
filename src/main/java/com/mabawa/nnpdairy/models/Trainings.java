@@ -29,7 +29,7 @@ public class Trainings {
     private Timestamp created;
 
     @Transient
-    private List<TMaterials> tMaterials;
+    private TMaterials tMaterials;
 
     @Transient
     private List<String> imagesDownload;
@@ -97,10 +97,10 @@ public class Trainings {
         this.created = created;
     }
 
-    public List<TMaterials> gettMaterials() {
+    public TMaterials gettMaterials() {
         return tMaterials;
     }
-    public void settMaterials(List<TMaterials> tMaterials) {
+    public void settMaterials(TMaterials tMaterials) {
         this.tMaterials = tMaterials;
     }
 

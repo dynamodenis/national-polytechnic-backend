@@ -23,4 +23,6 @@ public interface ConsultantsRepository extends JpaRepository<Consultants, UUID> 
     void deleteConsultantsById(@Param("id") UUID id);
 
     List<Consultants> findByNameContaining(String name);
+
+    List<Consultants> findConsultantsByUserid(UUID userId);
 }

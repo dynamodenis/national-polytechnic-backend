@@ -57,6 +57,9 @@ public class UserController {
     @Autowired
     private SendEmailService sendEmailService;
 
+    @Autowired
+    private ConsultantService consultantService;
+
     String title = Constants.TITLES[0];
 
     @PostMapping
@@ -484,6 +487,8 @@ public class UserController {
                 msg = "Phone number not yet verified.";
                 httpStatus = HttpStatus.BAD_REQUEST;
             }else{
+                List<Consultants> consultantsList = consultantService.getConsultantByUserId(userz.getId());
+
                 List roles = userz.getRoles();
                 List userRolezs = new ArrayList();
                 StringBuilder sb = new StringBuilder();
@@ -507,9 +512,16 @@ public class UserController {
                     String jwtToken = jwtTokenUtil.generateToken(userDetails);
                     userzMap.put("id", userz.getId());
                     userzMap.put("name", userz.getName());
+                    userzMap.put("phone", userz.getPhone());
                     userzMap.put("role", rolz);
                     userzMap.put("roles", userRolezs);
                     userzMap.put("token", jwtToken);
+                    if (!consultantsList.isEmpty())
+                    {
+                        consultantsList.forEach(consultants -> {
+                            userzMap.put("consultantId", consultants.getId());
+                        });
+                    }
                     status = Constants.STATUS[0];
                     msg = Constants.MESSAGES[2];
                     succs = 1;

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TMaterialService {
@@ -27,30 +28,38 @@ public class TMaterialService {
         return  tMaterialRepository.insert(tMaterials).getTrainingsId();
     }
 
-    public List<TMaterials> getTrainingTMaterials(String trainingId){
-        List<TMaterials> tMaterialsList = tMaterialRepository.getTMaterialsByTrainingsId(trainingId);
-        tMaterialsList.forEach(tMaterials -> {
+    public TMaterials getTrainingTMaterials(String trainingId){
+        Optional<TMaterials> tMaterialsOptional = tMaterialRepository.getTMaterialsByTrainingsId(trainingId);
+        TMaterials tMaterials = new TMaterials();
+        if (tMaterialsOptional.isPresent())
+        {
+            tMaterials = tMaterialsOptional.get();
+            List<String> tMaterialsDataStr = new ArrayList<>();
             List<TMaterialsData> tMaterialsDataList = tMaterials.gettMaterialsData();
             tMaterialsDataList.forEach(tMaterialsData -> {
                 if (tMaterialsData.getType() == 1){
-                    tMaterialsData.setContentDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
+                    tMaterialsDataStr.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
             });
-        });
-        return  tMaterialsList;
+            tMaterials.settMaterialsData(new ArrayList<>());
+            tMaterials.settMImages(tMaterialsDataStr);
+        }
+        return  tMaterials;
     }
 
     public List<String> getTrainingTMaterialsImages(String trainingId){
-        List<TMaterials> tMaterialsList = tMaterialRepository.getTMaterialsByTrainingsId(trainingId);
+        Optional<TMaterials> tMaterialsOptional = tMaterialRepository.getTMaterialsByTrainingsId(trainingId);
         List<String> imageDownloads = new ArrayList<>();
-        tMaterialsList.forEach(tMaterials -> {
+        if (tMaterialsOptional.isPresent())
+        {
+            TMaterials tMaterials = tMaterialsOptional.get();
             List<TMaterialsData> tMaterialsDataList = tMaterials.gettMaterialsData();
             tMaterialsDataList.forEach(tMaterialsData -> {
                 if (tMaterialsData.getType() == 1){
                     imageDownloads.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
             });
-        });
+        }
         return  imageDownloads;
     }
 

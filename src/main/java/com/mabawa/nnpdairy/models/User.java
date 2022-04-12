@@ -32,8 +32,9 @@ public class User {
     @Column(name = "firstTimeLogin", columnDefinition = "integer default 0")
     private Integer firstTimeLogin;
     private Integer type;
+
     @Transient
-    private List roles;
+    private List<Role> roles;
 
     public UUID getId() {
         return id;
@@ -140,10 +141,10 @@ public class User {
         this.type = type;
     }
 
-    public List getRoles() {
+    public List<Role> getRoles() {
         return roles;
     }
-    public void setRoles(List roles) {
+    public void setRoles(List<Role> roles) {
         this.roles = roles;
     }
 }

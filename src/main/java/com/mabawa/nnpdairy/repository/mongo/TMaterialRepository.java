@@ -6,10 +6,11 @@ import org.springframework.data.mongodb.repository.DeleteQuery;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TMaterialRepository extends MongoRepository<TMaterials, String> {
     @Query("{ 'trainingsId' : ?0 }")
-    List<TMaterials> getTMaterialsByTrainingsId(String trainingsId);
+    Optional<TMaterials> getTMaterialsByTrainingsId(String trainingsId);
 
     public void deleteTMaterialsByTrainingsId(String trainingsId);
 }

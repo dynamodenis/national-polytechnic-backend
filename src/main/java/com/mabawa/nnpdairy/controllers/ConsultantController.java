@@ -1,14 +1,11 @@
 package com.mabawa.nnpdairy.controllers;
 
 import com.mabawa.nnpdairy.constants.Constants;
-import com.mabawa.nnpdairy.models.Appointments;
-import com.mabawa.nnpdairy.models.Consultants;
-import com.mabawa.nnpdairy.models.Response;
+import com.mabawa.nnpdairy.models.*;
 import com.mabawa.nnpdairy.models.mongo.ConsultantsProfile;
-import com.mabawa.nnpdairy.services.AppointmentService;
-import com.mabawa.nnpdairy.services.ConsultantService;
-import com.mabawa.nnpdairy.services.ImageService;
+import com.mabawa.nnpdairy.services.*;
 import com.mabawa.nnpdairy.services.mongo.ConsultantsProfileService;
+import okhttp3.OkHttpClient;
 import org.bson.BsonBinarySubType;
 import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +21,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping({"api/v1/consultants"})
@@ -40,6 +38,12 @@ public class ConsultantController {
     @Autowired
     private AppointmentService appointmentService;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private SendSMSService sendSMSService;
+
     String title = Constants.TITLES[0];
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
@@ -49,6 +53,15 @@ public class ConsultantController {
         {
             String msg = "Please provide Consultant Title.";
             return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+        }
+        if (!consultants.getUserid().toString().isEmpty())
+        {
+            List<Consultants> userIdList = consultantService.getConsultantByUserId(consultants.getUserid());
+            if (!userIdList.isEmpty())
+            {
+                String msg = "A Consultant already exists with User provided.";
+                return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+            }
         }
         if (!consultants.getName().isEmpty()) {
             Optional<Consultants> consultantsOptional = consultantService.getConsultantByName(consultants.getName());
@@ -99,6 +112,16 @@ public class ConsultantController {
         Consultants consultants = consultantService.getJson(consultant);
         Consultants savedConsultant = consultantService.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("No Consultant found By ID Provided."));
+
+        if (!consultants.getUserid().toString().isEmpty())
+        {
+            List<Consultants> userIdList = consultantService.getConsultantByUserId(consultants.getUserid());
+            if (!userIdList.isEmpty())
+            {
+                String msg = "A Consultant already exists with User provided.";
+                return new ResponseEntity<Response>(this.CResponse(this.title, Constants.STATUS[2], 0, msg, new HashMap()), HttpStatus.BAD_REQUEST);
+            }
+        }
 
         consultants.setId(savedConsultant.getId());
         consultants.setCreated(savedConsultant.getCreated());
@@ -317,6 +340,40 @@ public class ConsultantController {
                 .orElseThrow(()-> new EntityNotFoundException("Appointment not found by ID provided."));
 
         appointmentService.updateAppointmentStatus(status, id);
+
+        String[] statusStr = {"No-Appointment", "Open", "Confirmed", "Cancelled", "Re-Scheduled"};
+
+        Optional<User> userOptional = userService.getUserById(savedAppointment.getAppuser());
+        Optional<Consultants> consultantsOptional = consultantService.findById(savedAppointment.getConsultant());
+
+        if (userOptional.isPresent())
+        {
+            User user = userOptional.get();
+            Consultants consultants = consultantsOptional.get();
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(180, TimeUnit.SECONDS)
+                    .readTimeout(180, TimeUnit.SECONDS)
+                    .build();
+            MessageBodySema messageBodySema = new MessageBodySema();
+
+            if (status == 4){
+                messageBodySema.setText("Dear " + user.getName() + " your appointment to our Consultant " + consultants.getName() +
+                        " has been " + statusStr[status] + ". Kindly re-schedule another appointment.");
+            }else if (status == 2){
+                messageBodySema.setText("Dear " + user.getName() + " your appointment to our Consultant " + consultants.getName() +
+                        " has been " + statusStr[status] + ". Kindly book another appointment.");
+            }
+            else{
+                messageBodySema.setText("Dear " + user.getName() + " your appointment to our Consultant " + consultants.getName() +
+                        " has been " + statusStr[status] + ". The Consultant will be in contact.");
+            }
+            System.out.printf(messageBodySema.getText() + ":" + user.getPhone());
+            messageBodySema.setRecipients(user.getPhone());
+
+            sendSMSService.sendSemaSMS(messageBodySema, client);
+        }
+
         HashMap suppzMap = new HashMap();
 
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[8], suppzMap);

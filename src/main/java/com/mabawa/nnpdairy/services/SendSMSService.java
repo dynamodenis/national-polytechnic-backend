@@ -88,7 +88,7 @@ public class SendSMSService {
         MessagesSent sent = messageSentRepository.saveAndFlush(messagesSent);
 //        String callbackUrl = "http://34.67.196.163:8181/api/v1/sms_callback/callback/" + String.valueOf(sent.getId()) + "/" + String.valueOf(sent.getId());
 //        messageBody.setCallbackURL(callbackUrl);
-//        sendSMS(messageBody, client);
+        sendSemaSMS(messageBodySema, client);
     }
 
     public void sendResetPasswordSms(User user, OkHttpClient client) throws IOException{

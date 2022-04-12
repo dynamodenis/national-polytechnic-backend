@@ -1,6 +1,7 @@
 package com.mabawa.nnpdairy.models.mongo;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -17,6 +18,9 @@ public class TMaterials {
     private String url;
 
     private List<TMaterialsData> tMaterialsData;
+
+    @Transient
+    private List<String> tMImages;
 
     public String getId() {
         return id;
@@ -51,5 +55,12 @@ public class TMaterials {
     }
     public void settMaterialsData(List<TMaterialsData> tMaterialsData) {
         this.tMaterialsData = tMaterialsData;
+    }
+
+    public List<String> gettMImages() {
+        return tMImages;
+    }
+    public void settMImages(List<String> tMImages) {
+        this.tMImages = tMImages;
     }
 }

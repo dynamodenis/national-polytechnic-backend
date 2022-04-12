@@ -33,6 +33,11 @@ public class ConsultantService {
         return consultantsRepository.getConsultantByName(name);
     }
 
+    public List<Consultants> getConsultantByUserId(UUID userid)
+    {
+        return consultantsRepository.findConsultantsByUserid(userid);
+    }
+
     public List<Consultants> getNameContaining(String nme){
         return consultantsRepository.findByNameContaining(nme);
     }

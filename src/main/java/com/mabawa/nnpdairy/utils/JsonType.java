@@ -10,11 +10,12 @@ import java.io.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
 public class JsonType implements UserType {
     @Override
     public int[] sqlTypes() {
-        return new int[]{2000};
+        return new int[]{Types.LONGVARCHAR};
     }
 
     @Override

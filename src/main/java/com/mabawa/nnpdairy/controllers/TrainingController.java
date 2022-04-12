@@ -63,18 +63,16 @@ public class TrainingController {
                 tMaterials.setTrainingsId(trainings.getId().toString());
                 tMaterials.setTitle("");
                 tMaterials.setUrl(url);
-                List<TMaterialsData> tMaterialsList = new ArrayList<>();
+                List<String> tMaterialsList = new ArrayList<>();
                 for (MultipartFile con : content)
                 {
                     TMaterialsData tMaterialsData =  new TMaterialsData();
                     tMaterialsData.setContent(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
                     tMaterialsData.setType(1);
 
-                    tMaterialsList.add(tMaterialsData);
-
-                    tMaterialsData.setContentDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
+                    tMaterialsList.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
-                tMaterials.settMaterialsData(tMaterialsList);
+                tMaterials.settMImages(tMaterialsList);
 
                 String matStr = tMaterialService.addTMaterial(tMaterials);
             }catch (IOException ex){
@@ -82,10 +80,8 @@ public class TrainingController {
                 //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
         }
-        List<TMaterials> tMaterialsList = new ArrayList<>();
-        tMaterialsList.add(tMaterials);
 
-        trainings.settMaterials(tMaterialsList);
+        trainings.settMaterials(tMaterials);
 
         HashMap suppzMap = new HashMap();
         suppzMap.put("trainings", trainings);
@@ -102,8 +98,6 @@ public class TrainingController {
         trainings.setTopic(topic);
         trainings = trainingsService.update(trainings);
 
-        List<TMaterials> tMaterialsList = new ArrayList<>();
-
         TMaterials tMaterials = new TMaterials();
         if (content != null){
             tMaterialService.deleteTraining(savedTraining.getId().toString());
@@ -112,31 +106,27 @@ public class TrainingController {
                 tMaterials.setTrainingsId(trainings.getId().toString());
                 tMaterials.setTitle("");
                 tMaterials.setUrl(url);
-                List<TMaterialsData> tMaterialsListD = new ArrayList<>();
+                List<String> tMaterialsListD = new ArrayList<>();
                 for (MultipartFile con : content)
                 {
                     TMaterialsData tMaterialsData =  new TMaterialsData();
                     tMaterialsData.setContent(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
                     tMaterialsData.setType(1);
 
-                    tMaterialsListD.add(tMaterialsData);
-
-                    tMaterialsData.setContentDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
+                    tMaterialsListD.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
-                tMaterials.settMaterialsData(tMaterialsListD);
+                tMaterials.settMImages(tMaterialsListD);
 
                 String matStr = tMaterialService.addTMaterial(tMaterials);
-
-                tMaterialsList.add(tMaterials);
             }catch (IOException ex){
                 System.out.printf("Error : " + ex.toString());
                 //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
         }else{
-            tMaterialsList = tMaterialService.getTrainingTMaterials(trainings.getId().toString());
+            tMaterials = tMaterialService.getTrainingTMaterials(trainings.getId().toString());
         }
 
-        trainings.settMaterials(tMaterialsList);
+        trainings.settMaterials(tMaterials);
 
         HashMap hashMap = new HashMap();
         hashMap.put("training", trainings);
@@ -148,8 +138,6 @@ public class TrainingController {
         Trainings savedTraining = trainingsService.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("No Training found By ID Provided."));
 
-        List<TMaterials> tMaterialsList = new ArrayList<>();
-
         TMaterials tMaterials = new TMaterials();
         if (content != null){
             tMaterialService.deleteTraining(savedTraining.getId().toString());
@@ -158,31 +146,27 @@ public class TrainingController {
                 tMaterials.setTrainingsId(id.toString());
                 tMaterials.setTitle("");
                 tMaterials.setUrl(url);
-                List<TMaterialsData> tMaterialsListD = new ArrayList<>();
+                List<String> tMaterialsListD = new ArrayList<>();
                 for (MultipartFile con : content)
                 {
                     TMaterialsData tMaterialsData =  new TMaterialsData();
                     tMaterialsData.setContent(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
                     tMaterialsData.setType(1);
 
-                    tMaterialsListD.add(tMaterialsData);
-
-                    tMaterialsData.setContentDownload(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
+                    tMaterialsListD.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
-                tMaterials.settMaterialsData(tMaterialsListD);
+                tMaterials.settMImages(tMaterialsListD);
 
                 String matStr = tMaterialService.addTMaterial(tMaterials);
-
-                tMaterialsList.add(tMaterials);
             }catch (IOException ex){
                 System.out.printf("Error : " + ex.toString());
                 //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
             }
         }else{
-            tMaterialsList = tMaterialService.getTrainingTMaterials(savedTraining.getId().toString());
+            tMaterials = tMaterialService.getTrainingTMaterials(savedTraining.getId().toString());
         }
 
-        savedTraining.settMaterials(tMaterialsList);
+        savedTraining.settMaterials(tMaterials);
 
         HashMap hashMap = new HashMap();
         hashMap.put("training", savedTraining);
