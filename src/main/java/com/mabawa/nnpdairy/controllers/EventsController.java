@@ -158,6 +158,14 @@ public class EventsController {
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
+    @DeleteMapping(path = {"/deleteAllEvents"})
+    public ResponseEntity<Response> deleteAllEvents()
+    {
+        eventsService.deleteAllEvent();
+
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {
         return new ResponseEntity<Response>(this.EResponse(title, status, success, msg, map), HttpStatus.OK);
     }

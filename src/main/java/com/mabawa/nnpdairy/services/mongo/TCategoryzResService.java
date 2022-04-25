@@ -69,4 +69,8 @@ public class TCategoryzResService {
     public  void deleteTcategoryResources(String tcategoryResId){
         tCategoryzResRepository.deleteTCategoryResourcesById(tcategoryResId);
     }
+
+    public  void deleteAllTcategoryResources(){
+        tCategoryzResRepository.deleteAll();
+    }
 }

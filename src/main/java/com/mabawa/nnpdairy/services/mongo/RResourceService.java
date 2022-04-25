@@ -38,4 +38,8 @@ public class RResourceService {
     public  void deleteResources(String researchId){
         rResourcesRepository.deleteRMaterialsByResearchId(researchId);
     }
+
+    public  void deleteAllResources(){
+        rResourcesRepository.deleteAll();
+    }
 }

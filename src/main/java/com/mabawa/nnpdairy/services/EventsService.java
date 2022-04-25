@@ -64,4 +64,9 @@ public class EventsService {
     {
         eventsRepository.deleteEventsById(id);
     }
+
+    public void deleteAllEvent()
+    {
+        eventsRepository.deleteAllEvents();
+    }
 }

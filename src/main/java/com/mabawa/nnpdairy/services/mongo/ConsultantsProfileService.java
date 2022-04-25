@@ -54,4 +54,8 @@ public class ConsultantsProfileService {
     public void deleteConsultantProfile(String conId){
         consultantsProfileRepository.deleteConsultantsProfileById(conId);
     }
+
+    public void deleteAllConsultantProfile(){
+        consultantsProfileRepository.deleteAll();
+    }
 }

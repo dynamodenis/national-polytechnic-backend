@@ -25,6 +25,11 @@ public interface EventsRepository extends JpaRepository<Events, UUID> {
     @Query("DELETE FROM Events events WHERE events.id = :id")
     void deleteEventsById(@Param("id") UUID id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Events events")
+    void deleteAllEvents();
+
     Optional<Events> findEventsByTopic(String topic);
 
     List<Events> findEventsByTopicContainingIgnoreCase(String topic);

@@ -72,4 +72,8 @@ public class AppointmentService {
     public void  deleteAppointmentByUser(UUID uzer){
         appointmentRepository.deleteAppointmentsByAppuser(uzer);
     }
+
+    public void  deleteAllAppointment(){
+        appointmentRepository.deleteAllAppointments();
+    }
 }

@@ -38,6 +38,11 @@ public interface AppointmentRepository extends JpaRepository<Appointments, UUID>
     @Query("DELETE FROM Appointments appointments WHERE appointments.appuser = :appuser")
     void deleteAppointmentsByAppuser(@Param("appuser") UUID appuser);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Appointments appointments")
+    void deleteAllAppointments();
+
     List<Appointments> findAllByConsultant(UUID consultant);
 
     List<Appointments> findAllByAppuser(UUID appuser);

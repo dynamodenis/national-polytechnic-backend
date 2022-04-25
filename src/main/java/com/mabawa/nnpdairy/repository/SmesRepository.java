@@ -22,5 +22,10 @@ public interface SmesRepository extends JpaRepository<Smes, UUID> {
     @Query("DELETE FROM Smes smes WHERE smes.id = :id")
     void deleteSmesById(@Param("id") UUID id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Smes smes")
+    void deleteAllSmes();
+
     List<Smes> findByNameContaining(String name);
 }

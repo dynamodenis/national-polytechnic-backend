@@ -91,6 +91,14 @@ public class FaqController {
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
+    @DeleteMapping(path = {"/deleteAllFaq"})
+    private ResponseEntity<Response> deleteAllFaqs()
+    {
+        faqService.deleteAllFaq();
+
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {
         return new ResponseEntity<Response>(this.FResponse(title, status, success, msg, map), HttpStatus.OK);
     }

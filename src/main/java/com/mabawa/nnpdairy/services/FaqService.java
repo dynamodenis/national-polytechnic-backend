@@ -43,4 +43,9 @@ public class FaqService {
     {
         faqRepository.deleteFaqById(id);
     }
+
+    public void deleteAllFaq()
+    {
+        faqRepository.deleteAllFaqs();
+    }
 }

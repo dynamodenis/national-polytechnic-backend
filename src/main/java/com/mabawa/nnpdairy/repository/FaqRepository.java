@@ -18,5 +18,10 @@ public interface FaqRepository extends JpaRepository<Faq, UUID> {
     @Query("DELETE FROM Faq faq WHERE faq.id = :id")
     void deleteFaqById(@Param("id") UUID id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Faq faq")
+    void deleteAllFaqs();
+
     List<Faq> findByQuestionContainingIgnoreCase(String qstn);
 }

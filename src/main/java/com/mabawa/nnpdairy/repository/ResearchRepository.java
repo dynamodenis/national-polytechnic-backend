@@ -20,4 +20,9 @@ public interface ResearchRepository extends JpaRepository<Research, UUID> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Research research WHERE research.id = :id")
     void deleteResearchById(@Param("id") UUID id);
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Research research")
+    void deleteAllResearch();
 }

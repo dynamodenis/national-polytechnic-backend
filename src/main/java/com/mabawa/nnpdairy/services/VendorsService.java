@@ -41,4 +41,8 @@ public class VendorsService {
     public void deleteById(UUID id){
         vendorsRepository.deleteVendorById(id);
     }
+
+    public void deleteAllVendor(){
+        vendorsRepository.deleteAllVendor();
+    }
 }

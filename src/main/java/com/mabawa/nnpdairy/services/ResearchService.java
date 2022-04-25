@@ -51,6 +51,10 @@ public class ResearchService {
         researchRepository.deleteResearchById(rId);
     }
 
+    public void deleteAllResearch(){
+        researchRepository.deleteAllResearch();
+    }
+
     public Research getJson(String res){
         Research research = gson.fromJson(res, Research.class);
 

@@ -42,4 +42,8 @@ public class SmesService {
     public void deleteById(UUID id){
         smesRepository.deleteSmesById(id);
     }
+
+    public void deleteAllSMes(){
+        smesRepository.deleteAllSmes();
+    }
 }

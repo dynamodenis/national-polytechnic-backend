@@ -163,6 +163,7 @@ public class TCategoryzController {
 
     @DeleteMapping(path = {"/deleteAll"})
     public ResponseEntity<Response> deleteAllCategory() {
+        tCategoryzResService.deleteAllTcategoryResources();
         tCategoryzService.deleteAllTCategory();
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }

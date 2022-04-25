@@ -54,6 +54,10 @@ public class ConsultantService {
         consultantsRepository.deleteConsultantsById(id);
     }
 
+    public void deleteAllConsultants(){
+        consultantsRepository.deleteAllConsultants();
+    }
+
     public Consultants getJson(String consultant){
         Consultants consultants = gson.fromJson(consultant, Consultants.class);
 

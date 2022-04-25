@@ -22,6 +22,11 @@ public interface ConsultantsRepository extends JpaRepository<Consultants, UUID> 
     @Query("DELETE FROM Consultants consultants WHERE consultants.id = :id")
     void deleteConsultantsById(@Param("id") UUID id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Consultants consultants")
+    void deleteAllConsultants();
+
     List<Consultants> findByNameContaining(String name);
 
     List<Consultants> findConsultantsByUserid(UUID userId);

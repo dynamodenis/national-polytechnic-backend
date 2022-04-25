@@ -63,6 +63,7 @@ public class TrainingController {
                 tMaterials.setTrainingsId(trainings.getId().toString());
                 tMaterials.setTitle("");
                 tMaterials.setUrl(url);
+                List<TMaterialsData> tMaterialsDataList = new ArrayList<>();
                 List<String> tMaterialsList = new ArrayList<>();
                 for (MultipartFile con : content)
                 {
@@ -70,11 +71,15 @@ public class TrainingController {
                     tMaterialsData.setContent(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
                     tMaterialsData.setType(1);
 
+                    tMaterialsDataList.add(tMaterialsData);
+
                     tMaterialsList.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
-                tMaterials.settMImages(tMaterialsList);
-
+                tMaterials.settMaterialsData(tMaterialsDataList);
                 String matStr = tMaterialService.addTMaterial(tMaterials);
+                
+                tMaterials.settMImages(tMaterialsList);
+                tMaterials.settMaterialsData(new ArrayList<>());
             }catch (IOException ex){
                 System.out.printf("Error : " + ex.toString());
                 //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
@@ -106,6 +111,8 @@ public class TrainingController {
                 tMaterials.setTrainingsId(trainings.getId().toString());
                 tMaterials.setTitle("");
                 tMaterials.setUrl(url);
+
+                List<TMaterialsData> tMaterialsDataList = new ArrayList<>();
                 List<String> tMaterialsListD = new ArrayList<>();
                 for (MultipartFile con : content)
                 {
@@ -113,11 +120,16 @@ public class TrainingController {
                     tMaterialsData.setContent(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
                     tMaterialsData.setType(1);
 
+                    tMaterialsDataList.add(tMaterialsData);
+
                     tMaterialsListD.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
-                tMaterials.settMImages(tMaterialsListD);
+                tMaterials.settMaterialsData(tMaterialsDataList);
 
                 String matStr = tMaterialService.addTMaterial(tMaterials);
+
+                tMaterials.settMImages(tMaterialsListD);
+                tMaterials.settMaterialsData(new ArrayList<>());
             }catch (IOException ex){
                 System.out.printf("Error : " + ex.toString());
                 //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
@@ -146,6 +158,8 @@ public class TrainingController {
                 tMaterials.setTrainingsId(id.toString());
                 tMaterials.setTitle("");
                 tMaterials.setUrl(url);
+
+                List<TMaterialsData> tMaterialsDataList = new ArrayList<>();
                 List<String> tMaterialsListD = new ArrayList<>();
                 for (MultipartFile con : content)
                 {
@@ -153,11 +167,16 @@ public class TrainingController {
                     tMaterialsData.setContent(new Binary(BsonBinarySubType.BINARY, imageService.compressBytes(con.getBytes())));
                     tMaterialsData.setType(1);
 
+                    tMaterialsDataList.add(tMaterialsData);
+
                     tMaterialsListD.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
                 }
-                tMaterials.settMImages(tMaterialsListD);
+                tMaterials.settMaterialsData(tMaterialsDataList);
 
                 String matStr = tMaterialService.addTMaterial(tMaterials);
+
+                tMaterials.settMImages(tMaterialsListD);
+                tMaterials.settMaterialsData(new ArrayList<>());
             }catch (IOException ex){
                 System.out.printf("Error : " + ex.toString());
                 //throw new UnsupportedMediaException("Invalid or unsupported Media type.");
@@ -227,6 +246,13 @@ public class TrainingController {
 
         tMaterialService.deleteTraining(id.toString());
         trainingsService.deleteTrainingById(id);
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
+    @DeleteMapping(path = {"/deleteAllTrainings"})
+    public ResponseEntity<Response> deleteAllTraining() {
+        tMaterialService.deleteAllTraining();
+        trainingsService.deleteAllTraining();
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 

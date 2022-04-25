@@ -22,5 +22,10 @@ public interface TrainersRepository extends JpaRepository<Trainings, UUID> {
     @Query("DELETE FROM Trainings trainings WHERE trainings.id = :id")
     void deleteTrainingsById(@Param("id") UUID id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Trainings trainings")
+    void deleteAllTrainings();
+
     List<Trainings> findTrainingsByCategory(UUID category);
 }

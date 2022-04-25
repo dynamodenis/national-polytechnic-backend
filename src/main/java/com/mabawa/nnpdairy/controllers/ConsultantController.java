@@ -245,6 +245,15 @@ public class ConsultantController {
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
+    @DeleteMapping(path = {"/deleteAllConsultants"})
+    public ResponseEntity<Response> deleteAllConsultants() {
+
+        consultantsProfileService.deleteAllConsultantProfile();
+        appointmentService.deleteAllAppointment();
+        consultantService.deleteAllConsultants();
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
     @PostMapping(path = "new-appointment")
     public ResponseEntity<Response> addNewAppointment(@RequestBody Appointments appointments){
         if (appointments.getAppuser().toString().isEmpty() || appointments.getConsultant().toString().isEmpty()){

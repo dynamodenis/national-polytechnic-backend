@@ -300,6 +300,7 @@ public class ProductsController {
 
     @DeleteMapping(path = {"/deleteAll"})
     public ResponseEntity<Response> deleteAllProducts() {
+        pImagesService.deleteAllProductImage();
         productsService.deleteAllProducts();
         return this.getResponseEntity(Constants.TITLES[0], Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }

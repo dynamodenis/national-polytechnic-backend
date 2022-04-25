@@ -22,5 +22,10 @@ public interface VendorsRepository extends JpaRepository<Vendors, UUID> {
     @Query("DELETE FROM Vendors vendors WHERE vendors.id = :id")
     void deleteVendorById(@Param("id") UUID id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Vendors vendors")
+    void deleteAllVendor();
+
     List<Vendors> findByNameContaining(String name);
 }

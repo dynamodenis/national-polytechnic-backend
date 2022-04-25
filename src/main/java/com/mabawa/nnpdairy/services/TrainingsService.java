@@ -66,6 +66,10 @@ public class TrainingsService {
         trainersRepository.deleteTrainingsById(tId);
     }
 
+    public void deleteAllTraining(){
+        trainersRepository.deleteAllTrainings();
+    }
+
     public Trainings getJson(String training){
         Trainings trainings = gson.fromJson(training, Trainings.class);
 

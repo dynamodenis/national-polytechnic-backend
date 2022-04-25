@@ -1,5 +1,6 @@
 package com.mabawa.nnpdairy.services.mongo;
 
+import com.google.gson.Gson;
 import com.mabawa.nnpdairy.models.mongo.TMaterials;
 import com.mabawa.nnpdairy.models.mongo.TMaterialsData;
 import com.mabawa.nnpdairy.repository.mongo.TMaterialRepository;
@@ -20,6 +21,9 @@ public class TMaterialService {
     @Autowired
     private ImageService imageService;
 
+    @Autowired
+    private Gson gson;
+
     public TMaterials getTMaterialById(String id){
         return tMaterialRepository.findById(id).get();
     }
@@ -34,13 +38,17 @@ public class TMaterialService {
         if (tMaterialsOptional.isPresent())
         {
             tMaterials = tMaterialsOptional.get();
+
             List<String> tMaterialsDataStr = new ArrayList<>();
             List<TMaterialsData> tMaterialsDataList = tMaterials.gettMaterialsData();
-            tMaterialsDataList.forEach(tMaterialsData -> {
-                if (tMaterialsData.getType() == 1){
-                    tMaterialsDataStr.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
-                }
-            });
+            if (tMaterialsDataList != null)
+            {
+                tMaterialsDataList.forEach(tMaterialsData -> {
+                    if (tMaterialsData.getType() == 1) {
+                        tMaterialsDataStr.add(Base64.getEncoder().encodeToString(imageService.decompressBytes(tMaterialsData.getContent().getData())));
+                    }
+                });
+            }
             tMaterials.settMaterialsData(new ArrayList<>());
             tMaterials.settMImages(tMaterialsDataStr);
         }
@@ -65,5 +73,9 @@ public class TMaterialService {
 
     public void deleteTraining(String tId){
         tMaterialRepository.deleteTMaterialsByTrainingsId(tId);
+    }
+
+    public void deleteAllTraining(){
+        tMaterialRepository.deleteAll();
     }
 }

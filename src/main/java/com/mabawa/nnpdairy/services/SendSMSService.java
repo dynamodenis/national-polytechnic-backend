@@ -92,7 +92,7 @@ public class SendSMSService {
     }
 
     public void sendResetPasswordSms(User user, OkHttpClient client) throws IOException{
-        MessageBody messageBody = new MessageBody();
+        MessageBodySema messageBodySema = new MessageBodySema();
         Random ran = new Random();
         Integer otp = ran.nextInt(100000);
         String encrypt = passwordEncryption.encrypt(String.valueOf(otp));
@@ -101,17 +101,21 @@ public class SendSMSService {
 
         User updUser = userService.update(user);
 
-        messageBody.setSms("Dear " + user.getName() + ", use " + String.valueOf(user.getOtpNumber()) + " as your pin and proceed to set your new " +
+        messageBodySema.setText("Dear " + user.getName() + ", use " + String.valueOf(otp) + " as your pin and proceed to set your new " +
         "password");
-        messageBody.setMsisdn(user.getPhone());
+        messageBodySema.setRecipients(user.getPhone());
 
         LocalDateTime lastLocal = LocalDateTime.now();
         final MessagesSent messagesSent = new MessagesSent();
-
+        messagesSent.setTextMessage(messageBodySema.getText());
+        messagesSent.setSent(0);
+        messagesSent.setDate(Timestamp.valueOf(lastLocal));
+        messagesSent.setMsisdn(messagesSent.getMsisdn());
+        messagesSent.setStatus(Constants.WAITING_FEEDBACK);
         MessagesSent sent = messageSentRepository.saveAndFlush(messagesSent);
-        String callbackUrl = "http://34.67.196.163:8181/api/v1/sms_callback/callback/" + String.valueOf(sent.getId()) + "/" + String.valueOf(sent.getId());
-        messageBody.setCallbackURL(callbackUrl);
-        sendSMS(messageBody, client);
+//        String callbackUrl = "http://34.67.196.163:8181/api/v1/sms_callback/callback/" + String.valueOf(sent.getId()) + "/" + String.valueOf(sent.getId());
+//        messageBody.setCallbackURL(callbackUrl);
+        sendSemaSMS(messageBodySema, client);
     }
 
     public void sendSemaSMS(MessageBodySema messageBodySema, OkHttpClient client)

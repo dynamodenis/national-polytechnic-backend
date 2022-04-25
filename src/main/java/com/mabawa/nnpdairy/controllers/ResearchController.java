@@ -214,6 +214,14 @@ public class ResearchController {
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
+    @DeleteMapping(path = {"/deleteAllResearch"})
+    public ResponseEntity<Response> deleteAllResearch() {
+        rResourceService.deleteAllResources();
+        researchService.deleteAllResearch();
+
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {
         return new ResponseEntity<Response>(this.RResponse(title, status, success, msg, map), HttpStatus.OK);
     }

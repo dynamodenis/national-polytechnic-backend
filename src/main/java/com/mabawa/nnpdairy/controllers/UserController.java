@@ -246,14 +246,23 @@ public class UserController {
         }
 
         try {
+            List<Consultants> consultantsList = consultantService.getConsultantByUserId(user1.getId());
+
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user1.getName(), psw));
             UserDetails userDetails = authUserDetailsService.loadUserByUsername(user1.getName());
             String jwtToken = jwtTokenUtil.generateToken(userDetails);
             userzMap.put("id", user1.getId());
             userzMap.put("name", user1.getName());
+            userzMap.put("phone", user1.getPhone());
             userzMap.put("role", rolz);
             userzMap.put("roles", userRolezs);
             userzMap.put("token", jwtToken);
+            if (!consultantsList.isEmpty())
+            {
+                consultantsList.forEach(consultants -> {
+                    userzMap.put("consultantId", consultants.getId());
+                });
+            }
 
             return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, 1, msg, userzMap), HttpStatus.OK);
         }catch (BadCredentialsException var18) {
@@ -513,6 +522,7 @@ public class UserController {
                     userzMap.put("id", userz.getId());
                     userzMap.put("name", userz.getName());
                     userzMap.put("phone", userz.getPhone());
+                    userzMap.put("isFirstLogin", userz.getFirstTimeLogin());
                     userzMap.put("role", rolz);
                     userzMap.put("roles", userRolezs);
                     userzMap.put("token", jwtToken);

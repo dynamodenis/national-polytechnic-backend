@@ -55,4 +55,8 @@ public class PImagesService {
     public void deleteProductImage(String pId){
         pImagesRepository.deleteById(pId);
     }
+
+    public void deleteAllProductImage(){
+        pImagesRepository.deleteAll();
+    }
 }

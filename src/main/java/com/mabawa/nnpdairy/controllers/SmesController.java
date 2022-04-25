@@ -88,6 +88,12 @@ public class SmesController {
         return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
     }
 
+    @DeleteMapping(path = {"/deleteAllSmes"})
+    public ResponseEntity<Response> deleteAllSme() {
+        smesService.deleteAllSMes();
+        return this.getResponseEntity(this.title, Constants.STATUS[0], 1, Constants.MESSAGES[4], new HashMap());
+    }
+
     private ResponseEntity<Response> getResponseEntity(String title, String status, Integer success, String msg, HashMap map) {
         return new ResponseEntity<Response>(this.SResponse(title, status, success, msg, map), HttpStatus.OK);
     }
