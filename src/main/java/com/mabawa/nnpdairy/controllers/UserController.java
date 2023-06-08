@@ -117,8 +117,8 @@ public class UserController {
         }
     }
 
-    @PostMapping(path = {"/user-registration"})
-    public ResponseEntity<Response> userRegistration(@RequestBody User user) {
+    @PostMapping(path = {"/user-registration/{prm}"})
+    public ResponseEntity<Response> userRegistration(@RequestBody User user, @PathVariable Integer prm) {
         String status;
         String msg;
         if (user.getType() == null)
@@ -166,7 +166,7 @@ public class UserController {
                     .readTimeout(180, TimeUnit.SECONDS)
                     .build();
 
-            User savedUser = sendSMSSema(user, client);
+            User savedUser = sendSMSSema(user, client, prm);
 
             if (configService.get().getAgepsw() == 1){
                 psws.setUserid(savedUser.getId());
@@ -290,8 +290,7 @@ public class UserController {
         return savedUser;
     }
 
-    private User sendSMSSema(User user, OkHttpClient client) {
-        MessageBodySema messageBodySema = new MessageBodySema();
+    private User sendSMSSema(User user, OkHttpClient client, int prm) {
         Random ran = new Random();
         Integer otp = ran.nextInt(100000);
 
@@ -301,7 +300,30 @@ public class UserController {
 
         User savedUser = userService.create(user);
 
-        sendSMSService.PrepSmsSema(messageBodySema, savedUser, client);
+        if (prm == 1)
+        {
+            MessageBodySema messageBodySema = new MessageBodySema();
+            sendSMSService.PrepSmsSema(messageBodySema, savedUser, client);
+        }else
+        {
+            String msg = "Dear " + user.getName() + ", please use the One Time Password below to verify your access to NNP Diary platform." +
+                    "\n"+
+                    "\n"+
+                    "\n"+
+                    "" + otp +
+                    "\n"+
+                    "\n"+
+                    "\n"+
+                    "Regards, " +
+                    "\n" +
+                    "Administrator, " +
+                    "\n" +
+                    "NNP Dairy Platform"+
+                    "\n" +
+                    "";
+
+            sendEmailService.sendRegistrationOtp(msg, user.getMail());
+        }
 
 
         return savedUser;
@@ -522,6 +544,10 @@ public class UserController {
                     userzMap.put("id", userz.getId());
                     userzMap.put("name", userz.getName());
                     userzMap.put("phone", userz.getPhone());
+                    if (!userz.getMail().isEmpty())
+                    {
+                        userzMap.put("email", userz.getMail());
+                    }
                     userzMap.put("isFirstLogin", userz.getFirstTimeLogin());
                     userzMap.put("role", rolz);
                     userzMap.put("roles", userRolezs);
@@ -547,8 +573,8 @@ public class UserController {
         return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, Integer.valueOf(succs), msg, userzMap), httpStatus);
     }
 
-    @PostMapping("/resendCode")
-    public ResponseEntity resendCode(@RequestBody User user) throws IOException {
+    @PostMapping("/resendCode/{prm}")
+    public ResponseEntity resendCode(@RequestBody User user, @PathVariable Integer prm) throws IOException {
         String status;
         String msg;
         if (user.getPhone().isEmpty())
@@ -575,11 +601,9 @@ public class UserController {
                 .readTimeout(180, TimeUnit.SECONDS)
                 .build();
 
-        User savedUser = sendSMSSema(user, client);
+        User savedUser = sendSMSSema(user, client, prm);
 
         user.setPassword(null);
-
-        sendSMSSema(user, client);
 
         HashMap hashMap = new HashMap();
         hashMap.put("user", savedUser);
@@ -697,16 +721,34 @@ public class UserController {
             succss = 1;
         }
 
-        userService.updateUserPassword(userz.getPassword(), userz.getId());
+        userService.updateUserPassword(encPsw, userz.getId());
         return new ResponseEntity<Response>(this.UserResponse(Constants.TITLES[0], status, Integer.valueOf(succss), msg, new HashMap()), HttpStatus.OK);
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity resetPassword(@RequestBody User user){
+    @GetMapping("/reset-password/{phone}/{prm}")
+    public ResponseEntity resetPassword(@PathVariable String phone, @PathVariable Integer prm){
         String msg = "";
         String status = "";
-        User savedUser = userService.getUserByPhone(user.getPhone())
-                .orElseThrow(()-> new EntityNotFoundException("No such User By Phone No. Provided."));
+
+        User savedUser = new User();
+        if (prm == 1)
+        {
+            savedUser = userService.getUserByPhone(phone)
+                    .orElseThrow(()-> new EntityNotFoundException("No such User By Phone No. Provided."));
+
+            if (savedUser.getPhone().isEmpty())
+            {
+                savedUser.setPhone(phone);
+            }
+        }else{
+            savedUser = userService.getUserByMail(phone)
+                    .orElseThrow(()-> new EntityNotFoundException("No such User By Email Provided."));
+
+            if (savedUser.getMail().isEmpty())
+            {
+                savedUser.setMail(phone);
+            }
+        }
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(180, TimeUnit.SECONDS)
@@ -714,7 +756,11 @@ public class UserController {
                 .build();
 
         try{
-            sendSMSService.sendResetPasswordSms(user, client);
+            if (prm == 1) {
+                sendSMSService.sendResetPasswordSms(savedUser, client);
+            }else{
+                sendEmailService.sendResetOtp(savedUser);
+            }
         }catch (IOException ex){
             status = Constants.STATUS[2];
             msg = "Internal server error.";

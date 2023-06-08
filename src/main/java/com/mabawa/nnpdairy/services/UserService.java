@@ -68,7 +68,7 @@ public class UserService {
     }
 
     public void updateUserPassword(String psw, UUID userId){
-        updateUserPassword(psw, userId);
+        userRepository.updateUserPassword(psw, userId);
     }
 
     public void deleteUserById(UUID userId){
